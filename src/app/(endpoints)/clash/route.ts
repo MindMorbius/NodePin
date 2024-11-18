@@ -122,7 +122,6 @@ export async function GET() {
         'Profile-Update-Interval': '24',
         'Support-URL': 'https://node.rkpin.site',
         'Profile-Title': 'NodePin',
-        'Content-Disposition': 'attachment; filename=clash.yaml',
         'Profile-Web-Page-URL': 'https://node.rkpin.site',
       }
     });

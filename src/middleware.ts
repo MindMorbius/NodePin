@@ -2,12 +2,10 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  // 需要认证的路径
+  // 需要认证的路径只保留 admin 路径
   const authPaths = [
     '/admin',
-    '/api/admin',
-    '/api/urls',  // 保护完整订阅列表
-    '/api/nodes'  // 保护节点详情
+    '/api/admin'
   ];
 
   const isAuthPath = authPaths.some(path => 
@@ -31,8 +29,6 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     '/admin/:path*',
-    '/api/admin/:path*',
-    '/api/urls/:path*',
-    '/api/nodes/:path*'
+    '/api/admin/:path*'
   ]
 }; 

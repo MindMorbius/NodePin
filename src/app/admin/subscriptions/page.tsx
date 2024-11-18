@@ -36,10 +36,10 @@ export default function SubscriptionManagement() {
   }, []);
 
   useEffect(() => {
-    fetch('/api/urls')
+    // 更新获取订阅列表的API
+    fetch('/api/admin/subscriptions')
       .then(res => res.json())
       .then(data => {
-        // 区分环境变量和数据库的订阅
         const processed = data.map((sub: Subscription) => ({
           ...sub,
           isEnv: sub.name.startsWith('订阅 ') && /^\d+$/.test(sub.name.split(' ')[1])
@@ -73,7 +73,7 @@ export default function SubscriptionManagement() {
       return;
     }
     
-    const res = await fetch('/api/admin/urls', {
+    const res = await fetch('/api/admin/subscriptions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newSub)
@@ -88,7 +88,7 @@ export default function SubscriptionManagement() {
   const handleUpdate = async (oldUrl: string) => {
     if (!editingSub) return;
     
-    const res = await fetch('/api/admin/urls', {
+    const res = await fetch('/api/admin/subscriptions', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
@@ -106,7 +106,7 @@ export default function SubscriptionManagement() {
   };
 
   const handleDelete = async (url: string) => {
-    const res = await fetch('/api/admin/urls', {
+    const res = await fetch('/api/admin/subscriptions', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url })
@@ -129,7 +129,7 @@ export default function SubscriptionManagement() {
     });
 
     try {
-      const res = await fetch('/api/nodes/single', {
+      const res = await fetch('/api/admin/nodes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: sub.url })
