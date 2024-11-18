@@ -1,4 +1,4 @@
-import { getSubscribeUrls } from '@/utils/env';
+import { getSubscribeUrls } from '@/services/subscription-store';
 import { parseSubscription } from '@/utils/clash';
 
 export async function fetchSubscriptionNodes(specificUrls?: string[]) {

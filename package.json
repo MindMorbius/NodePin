@@ -19,6 +19,7 @@
     "sonner": "^1.7.0"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241112.0",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^18",
     "@types/react": "^18",

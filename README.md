@@ -25,3 +25,13 @@ SUB_URL_2=
 ## 订阅导入
 通过 域名/clash 获取配置，可直接导入 clash 客户端
 
+## D1 数据库
+```sql
+DROP TABLE IF EXISTS subscriptions;
+CREATE TABLE IF NOT EXISTS subscriptions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  url TEXT NOT NULL UNIQUE,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch())
+);
+```

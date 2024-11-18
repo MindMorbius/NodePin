@@ -1,12 +1,17 @@
 import { NextResponse } from 'next/server';
-import { getSubscribeUrls } from '@/utils/env';
+import { getSubscribeUrls } from '@/services/subscription-store';
 import { fetchSubscriptionNodes } from '@/services/subscription';
+import type { D1Database } from '@cloudflare/workers-types';
 
 export const runtime = 'edge';
 
+interface Env {
+  DB: D1Database;
+}
+
 export async function GET(
   request: Request,
-  { env }: { env: any }
+  { env }: { env: Env }
 ) {
   try {
     const subscriptions = await getSubscribeUrls(env);

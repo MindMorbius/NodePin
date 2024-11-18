@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { fetchSubscriptionNodes } from '@/services/subscription';
-import { getSubscribeUrls } from '@/utils/env';
+import { getSubscribeUrls } from '@/services/subscription-store';
 
 export const runtime = 'edge';
 
