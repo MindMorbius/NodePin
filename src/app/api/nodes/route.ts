@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { fetchSubscriptionNodes } from '@/services/subscription';
 
+export const runtime = 'edge';
+
 export async function GET() {
   try {
     const results = await fetchSubscriptionNodes();

@@ -1,22 +1,21 @@
 import yaml from 'js-yaml';
-import axios from 'axios';
+import { http } from './fetch';
 import { SubscriptionInfo, Node } from '../types/clash';
 
 export async function parseSubscription(url: string): Promise<{
   info: SubscriptionInfo;
   nodes: Node[];
 }> {
-  const response = await axios.get(url, {
+  const response = await http.get(url, {
     headers: {
       'User-Agent': 'clash.meta',
-    //   'Accept': '*/*',
-    //   'Accept-Encoding': 'gzip, deflate, br',
     }
   });
+  
   const content = response.data;
+  const userInfo = response.headers.get('subscription-userinfo');
   
   // 解析订阅信息从 header
-  const userInfo = response.headers['subscription-userinfo'];
   let uploadBytes = 0, downloadBytes = 0, totalBytes = 0, expire = 0;
   
   if (userInfo) {

@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { parseSubscription } from '@/utils/clash';
 import { fetchSubscriptionNodes } from '@/services/subscription';
 
+export const runtime = 'edge';
+
 export async function GET(
   request: Request,
   { params }: { params: { url: string } }
