@@ -117,13 +117,13 @@ export default function SubscriptionManagement() {
         <div className="flex gap-2">
           <button
             onClick={() => router.push('/')}
-            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg"
+            className="px-4 py-2 bg-[var(--card)] hover:bg-[var(--card-hover)] rounded-lg transition-colors"
           >
             返回
           </button>
           <button
             onClick={logout}
-            className="px-4 py-2 bg-red-100 hover:bg-red-200 rounded-lg"
+            className="px-4 py-2 bg-red-500/10 text-red-500 hover:bg-red-500/20 rounded-lg transition-colors"
           >
             登出
           </button>
@@ -148,7 +148,7 @@ export default function SubscriptionManagement() {
           />
           <button
             onClick={handleAdd}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            className="px-4 py-2 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white rounded-lg transition-colors"
           >
             添加
           </button>
@@ -156,7 +156,7 @@ export default function SubscriptionManagement() {
 
         <div className="space-y-2">
           {dbSubs.map((sub) => (
-            <div key={sub.url} className="flex justify-between items-center p-4 bg-gray-50 rounded">
+            <div key={sub.url} className="flex justify-between items-center p-4 bg-[var(--card)] hover:bg-[var(--card-hover)] rounded-lg transition-colors">
               {editingSub?.url === sub.url ? (
                 <>
                   <div className="flex gap-2 flex-1 mr-2">
@@ -176,13 +176,13 @@ export default function SubscriptionManagement() {
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleUpdate(sub.url)}
-                      className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                      className="px-3 py-1 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white rounded-lg transition-colors"
                     >
                       保存
                     </button>
                     <button
                       onClick={() => setEditingSub(null)}
-                      className="px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-600"
+                      className="px-3 py-1 bg-[var(--card)] hover:bg-[var(--card-hover)] rounded-lg transition-colors"
                     >
                       取消
                     </button>

@@ -35,7 +35,7 @@ export default function LoginDialog() {
     <>
       <button
         onClick={handleManageClick}
-        className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+        className="px-4 py-2 bg-[var(--card)] hover:bg-[var(--card-hover)] rounded-lg transition-colors"
       >
         管理订阅
       </button>
@@ -47,7 +47,7 @@ export default function LoginDialog() {
       >
         <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
         <div className="fixed inset-0 flex items-center justify-center p-4">
-          <Dialog.Panel className="bg-white rounded-xl p-6 w-full max-w-sm">
+          <Dialog.Panel className="bg-[var(--card)] rounded-xl p-6 w-full max-w-sm ring-1 ring-black/5">
             <Dialog.Title className="text-lg font-bold mb-4">管理员登录</Dialog.Title>
             <form onSubmit={handleSubmit} className="space-y-4">
               <input
@@ -56,6 +56,7 @@ export default function LoginDialog() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="w-full p-2 border rounded"
+                autoComplete="username"
               />
               <input
                 type="password"
@@ -63,19 +64,20 @@ export default function LoginDialog() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full p-2 border rounded"
+                autoComplete="current-password"
               />
               {error && <p className="text-red-500 text-sm">{error}</p>}
               <div className="flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
+                  className="px-4 py-2 bg-[var(--card)] hover:bg-[var(--card-hover)] rounded-lg transition-colors"
                 >
                   取消
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  className="px-4 py-2 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white rounded-lg transition-colors"
                 >
                   登录
                 </button>

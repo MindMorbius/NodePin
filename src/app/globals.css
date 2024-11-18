@@ -41,3 +41,27 @@ body {
   background: #94a3b8;
   border-radius: 3px;
 }
+
+/* 添加过渡动画 */
+* {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* 优化输入框样式 */
+input {
+  background: var(--card);
+  border-color: rgb(0 0 0 / 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  input {
+    border-color: rgb(255 255 255 / 0.1);
+  }
+}
+
+input:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
