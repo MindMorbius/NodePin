@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import yaml from 'js-yaml';
 import { fetchSubscriptionNodes } from '@/services/subscription';
+import { Node } from '@/types/clash';
 
 export async function GET() {
   try {
@@ -10,7 +11,7 @@ export async function GET() {
     
     // 先统计所有节点名称出现次数
     results.forEach(result => {
-      result.nodes.forEach(node => {
+      result.nodes.forEach((node: Node) => {
         const name = node.settings.name;
         nameCount.set(name, (nameCount.get(name) || 0) + 1);
       });
@@ -18,7 +19,7 @@ export async function GET() {
 
     // 只给重名节点添加后缀
     results.forEach((result, subIndex) => {
-      const nodesWithSubIndex = result.nodes.map(node => {
+      const nodesWithSubIndex = result.nodes.map((node: Node) => {
         const name = node.settings.name;
         const isDuplicate = nameCount.get(name)! > 1;
         return {
