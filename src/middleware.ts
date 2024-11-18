@@ -6,7 +6,7 @@ export function middleware(request: NextRequest) {
     const authCookie = request.cookies.get('auth');
     
     if (!authCookie?.value) {
-      return NextResponse.redirect(new URL('/?showLogin=true', request.url));
+      return NextResponse.redirect(new URL('/', request.url));
     }
   }
 

@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { SubscriptionInfo, Node } from '@/types/clash';
 import NodeDialog from '@/components/NodeDialog';
 import LoginDialog from '@/components/LoginDialog';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface SubscriptionData {
   url: string;
@@ -124,15 +125,13 @@ function SubscriptionCard({ sub, loading, onShowNodes, index }: {
 }
 
 export default function Home() {
+  const router = useRouter();
+  const { isLoginOpen, openLogin, closeLogin } = useAuth();
   const [subscriptions, setSubscriptions] = useState<SubscriptionData[]>([]);
   const [loading, setLoading] = useState<LoadingState>({});
-  const [selectedSub, setSelectedSub] = useState<string | null>(null);
   const [selectedNodes, setSelectedNodes] = useState<Node[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [error, setError] = useState<string | undefined>();
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const router = useRouter();
-  const searchParams = useSearchParams();
 
   useEffect(() => {
     // 设置所有订阅的初始加载状态
@@ -180,12 +179,6 @@ export default function Home() {
       });
   }, []);
 
-  useEffect(() => {
-    if (searchParams.get('showLogin') === 'true') {
-      setIsLoginOpen(true);
-    }
-  }, [searchParams]);
-
   const handleShowNodes = (sub: SubscriptionData & { error?: string | null }) => {
     if (sub.error || !sub.nodes.length) {
       setError(
@@ -207,12 +200,7 @@ export default function Home() {
         <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent">
           订阅信息
         </h1>
-        <button
-          onClick={() => setIsLoginOpen(true)}
-          className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-        >
-          管理订阅
-        </button>
+        <LoginDialog />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -235,16 +223,6 @@ export default function Home() {
         }}
         nodes={selectedNodes}
         error={error}
-      />
-
-      <LoginDialog 
-        isOpen={isLoginOpen}
-        onClose={() => setIsLoginOpen(false)}
-        onLogin={(success) => {
-          if (success) {
-            router.push('/admin/subscriptions');
-          }
-        }}
       />
     </main>
   );

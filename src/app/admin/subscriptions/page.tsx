@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Subscription {
   name: string;
@@ -11,11 +12,21 @@ interface Subscription {
 }
 
 export default function SubscriptionManagement() {
+  const { checkAuth, logout } = useAuth();
+  const router = useRouter();
   const [subs, setSubs] = useState<Subscription[]>([]);
   const [newSub, setNewSub] = useState({ name: '', url: '' });
   const [editingSub, setEditingSub] = useState<Subscription | null>(null);
   const [showEnvSubs, setShowEnvSubs] = useState(false);
-  const router = useRouter();
+
+  useEffect(() => {
+    // 进入页面时重新检查登录状态
+    checkAuth().then(isAuth => {
+      if (!isAuth) {
+        router.push('/');
+      }
+    });
+  }, []);
 
   useEffect(() => {
     fetch('/api/urls')
@@ -103,12 +114,20 @@ export default function SubscriptionManagement() {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">订阅管理</h1>
-        <button
-          onClick={() => router.push('/')}
-          className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg"
-        >
-          返回
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => router.push('/')}
+            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg"
+          >
+            返回
+          </button>
+          <button
+            onClick={logout}
+            className="px-4 py-2 bg-red-100 hover:bg-red-200 rounded-lg"
+          >
+            登出
+          </button>
+        </div>
       </div>
 
       <div className="space-y-4">

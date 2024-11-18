@@ -1,19 +1,26 @@
+import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { ADMIN_USERNAME, ADMIN_PASSWORD } from '@/utils/env';
+
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin';
 
 export async function POST(request: Request) {
-  const { username, password } = await request.json();
+  const body = await request.json();
+  const { username, password } = body;
 
   if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-    const response = NextResponse.json({ success: true });
-    response.cookies.set('auth', 'true', { 
+    // 设置 cookie，7天过期
+    const cookieStore = cookies();
+    cookieStore.set('auth', 'true', {
+      path: '/',
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 // 7 days
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
     });
-    return response;
+
+    return new NextResponse(null, { status: 200 });
   }
 
-  return NextResponse.json({ success: false }, { status: 401 });
+  return new NextResponse(null, { status: 401 });
 } 
