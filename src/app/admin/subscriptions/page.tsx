@@ -4,11 +4,16 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '@/contexts/AuthContext';
+import NodeDialog from '@/components/NodeDialog';
+import { SubscriptionInfo, Node } from '@/types/clash';
 
 interface Subscription {
   name: string;
   url: string;
   isEnv?: boolean;  // 标记是否来自环境变量
+  info?: SubscriptionInfo;
+  nodes?: Node[];
+  loading?: boolean;
 }
 
 export default function SubscriptionManagement() {
@@ -18,6 +23,8 @@ export default function SubscriptionManagement() {
   const [newSub, setNewSub] = useState({ name: '', url: '' });
   const [editingSub, setEditingSub] = useState<Subscription | null>(null);
   const [showEnvSubs, setShowEnvSubs] = useState(false);
+  const [selectedNodes, setSelectedNodes] = useState<Node[]>([]);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
     // 进入页面时重新检查登录状态
@@ -109,6 +116,78 @@ export default function SubscriptionManagement() {
       setSubs(prev => prev.filter(sub => sub.url !== url));
     }
   };
+
+  const handleFetchInfo = async (sub: Subscription) => {
+    // 首先更新loading状态
+    setSubs(currentSubs => {
+      const newSubs = [...currentSubs];
+      const index = newSubs.findIndex(s => s.url === sub.url);
+      if (index !== -1) {
+        newSubs[index] = { ...newSubs[index], loading: true };
+      }
+      return newSubs;
+    });
+
+    try {
+      const res = await fetch('/api/nodes/single', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: sub.url })
+      });
+      const data = await res.json();
+      
+      // 使用函数式更新来确保基于最新状态
+      setSubs(currentSubs => {
+        const newSubs = [...currentSubs];
+        const index = newSubs.findIndex(s => s.url === sub.url);
+        
+        if (index === -1) return currentSubs;
+
+        if (data.error || !data.nodes?.length) {
+          // 处理错误情况
+          newSubs[index] = { ...newSubs[index], loading: false };
+          alert(data.error || '未获取到节点数据');
+          return newSubs;
+        }
+
+        // 更新成功情况
+        newSubs[index] = {
+          ...newSubs[index],
+          loading: false,
+          info: data.info,
+          nodes: data.nodes
+        };
+        return newSubs;
+      });
+    } catch (error) {
+      // 处理请求失败情况
+      setSubs(currentSubs => {
+        const newSubs = [...currentSubs];
+        const index = newSubs.findIndex(s => s.url === sub.url);
+        if (index !== -1) {
+          newSubs[index] = { ...newSubs[index], loading: false };
+        }
+        return newSubs;
+      });
+      alert('获取信息失败');
+    }
+  };
+
+  const handleShowNodes = (sub: Subscription) => {
+    if (sub.nodes?.length) {
+      setSelectedNodes(sub.nodes);
+      setIsDialogOpen(true);
+    }
+  };
+
+  // 添加 formatBytes 辅助函数
+  function formatBytes(bytes: number) {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
+  }
 
   return (
     <div className="p-6">
@@ -207,6 +286,28 @@ export default function SubscriptionManagement() {
                     >
                       删除
                     </button>
+                    <button
+                      onClick={() => handleFetchInfo(sub)}
+                      className={`px-3 py-1 rounded ${
+                        sub.loading 
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                          : 'bg-blue-500 text-white hover:bg-blue-600'
+                      }`}
+                      disabled={sub.loading}
+                    >
+                      {sub.loading ? '获取中...' : '获取信息'}
+                    </button>
+                    <button
+                      onClick={() => handleShowNodes(sub)}
+                      className={`px-3 py-1 rounded ${
+                        sub.nodes?.length
+                          ? 'bg-green-500 text-white hover:bg-green-600'
+                          : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      }`}
+                      disabled={!sub.nodes?.length}
+                    >
+                      查看节点
+                    </button>
                   </div>
                 </>
               )}
@@ -235,9 +336,39 @@ export default function SubscriptionManagement() {
                     <div>
                       <div className="font-medium">{sub.name}</div>
                       <div className="text-sm text-gray-500">{sub.url}</div>
+                      {sub.info && (
+                        <div className="text-xs text-gray-400 mt-1">
+                          节点数: {sub.nodes?.length || 0} | 
+                          已用: {formatBytes(sub.info.upload + sub.info.download)} / {formatBytes(sub.info.total)}
+                        </div>
+                      )}
                     </div>
-                    <div className="text-xs text-gray-400">
-                      通过环境变量设置
+                    <div className="flex gap-2 items-center">
+                      <button
+                        onClick={() => handleFetchInfo(sub)}
+                        className={`px-3 py-1 rounded ${
+                          sub.loading 
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                            : 'bg-blue-500 text-white hover:bg-blue-600'
+                        }`}
+                        disabled={sub.loading}
+                      >
+                        {sub.loading ? '获取中...' : '获取信息'}
+                      </button>
+                      <button
+                        onClick={() => handleShowNodes(sub)}
+                        className={`px-3 py-1 rounded ${
+                          sub.nodes?.length
+                            ? 'bg-green-500 text-white hover:bg-green-600'
+                            : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        }`}
+                        disabled={!sub.nodes?.length}
+                      >
+                        查看节点
+                      </button>
+                      <div className="text-xs text-gray-400">
+                        通过环境变量设置
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -246,6 +377,11 @@ export default function SubscriptionManagement() {
           </div>
         )}
       </div>
+      <NodeDialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        nodes={selectedNodes}
+      />
     </div>
   );
 } 
