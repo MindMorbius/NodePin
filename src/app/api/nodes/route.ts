@@ -7,6 +7,9 @@ export async function GET() {
     return NextResponse.json(results);
   } catch (error) {
     console.error('Failed to fetch nodes:', error);
-    return NextResponse.json([], { status: 500 });
+    return NextResponse.json({ 
+      error: 'Failed to fetch subscription data',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }

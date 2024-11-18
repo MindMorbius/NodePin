@@ -6,12 +6,31 @@ export async function GET() {
   try {
     const results = await fetchSubscriptionNodes();
     const allNodes: any[] = [];
-    const subscriptionInfos = results.map(r => r.info);
+    const nameCount = new Map<string, number>();
     
+    // 先统计所有节点名称出现次数
     results.forEach(result => {
-      allNodes.push(...result.nodes.map(node => node.settings));
+      result.nodes.forEach(node => {
+        const name = node.settings.name;
+        nameCount.set(name, (nameCount.get(name) || 0) + 1);
+      });
     });
 
+    // 只给重名节点添加后缀
+    results.forEach((result, subIndex) => {
+      const nodesWithSubIndex = result.nodes.map(node => {
+        const name = node.settings.name;
+        const isDuplicate = nameCount.get(name)! > 1;
+        return {
+          ...node.settings,
+          name: isDuplicate ? `${name} (订阅${subIndex + 1})` : name
+        };
+      });
+      allNodes.push(...nodesWithSubIndex);
+    });
+
+    const subscriptionInfos = results.map(r => r.info);
+    
     const subscriptionGroups = results.map((_, index) => {
       const subNodes = allNodes.filter((_, nodeIndex) => 
         Math.floor(nodeIndex / (allNodes.length / results.length)) === index
@@ -70,8 +89,14 @@ export async function GET() {
     const totalUsed = subscriptionInfos.reduce((sum, info) => sum + info.upload + info.download, 0);
     const totalQuota = subscriptionInfos.reduce((sum, info) => sum + info.total, 0);
     
-    // 找出最早的过期时间
-    const earliestExpire = Math.min(...subscriptionInfos.map(info => info.expire));
+    // 找出最早的有效过期时间
+    const validExpireTimes = subscriptionInfos
+      .map(info => info.expire)
+      .filter(expire => expire > Date.now() / 1000); // 过滤掉无效和已过期的时间
+    
+    const earliestExpire = validExpireTimes.length > 0 
+      ? Math.min(...validExpireTimes)
+      : 0; // 如果没有有效时间，返回0
 
     const yamlContent = yaml.dump(config, {
       lineWidth: -1,
@@ -107,6 +132,6 @@ function formatBytes(bytes: number): string {
 }
 
 function formatExpireDate(timestamp: number): string {
-  if (!timestamp) return '未知';
+  if (!timestamp || timestamp < Date.now() / 1000) return '未知';
   return new Date(timestamp * 1000).toLocaleDateString('zh-CN');
 }
