@@ -2,13 +2,19 @@
 const nextConfig = {
   output: 'standalone',
   typescript: {
-    // 在生产构建时忽略 TypeScript 错误
     ignoreBuildErrors: true
   },
   eslint: {
-    // 在生产构建时忽略 ESLint 错误
     ignoreDuringBuilds: true
   }
 };
+
+// 检测是否在 Cloudflare Pages 环境
+if (process.env.CF_PAGES) {
+  nextConfig.env = {
+    ...nextConfig.env,
+    NODEJS_COMPAT: '1'
+  };
+}
 
 module.exports = nextConfig; 
