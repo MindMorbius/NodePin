@@ -1,12 +1,27 @@
 import { NextResponse } from 'next/server';
 import { fetchSubscriptionNodes } from '@/services/subscription';
+import { getSubscribeUrls } from '@/utils/env';
 
 export const runtime = 'edge';
 
-export async function GET() {
+export async function GET(
+  request: Request,
+  { env }: { env: any }
+) {
   try {
-    const results = await fetchSubscriptionNodes();
-    return NextResponse.json(results);
+    const subscriptions = await getSubscribeUrls(env);
+    const urls = subscriptions.map(sub => sub.url);
+    const results = await fetchSubscriptionNodes(urls);
+    
+    const resultsWithNames = results.map(result => {
+      const subscription = subscriptions.find(sub => sub.url === result.url);
+      return {
+        ...result,
+        name: subscription?.name || ''
+      };
+    });
+    
+    return NextResponse.json(resultsWithNames);
   } catch (error) {
     console.error('Failed to fetch nodes:', error);
     return NextResponse.json({ 

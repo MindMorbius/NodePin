@@ -3,9 +3,12 @@
 import { useEffect, useState } from 'react';
 import { SubscriptionInfo, Node } from '@/types/clash';
 import NodeDialog from '@/components/NodeDialog';
+import LoginDialog from '@/components/LoginDialog';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 interface SubscriptionData {
   url: string;
+  name?: string;
   info: SubscriptionInfo;
   nodes: Node[];
   error?: string | null;
@@ -16,7 +19,7 @@ interface LoadingState {
 }
 
 function SubscriptionCard({ sub, loading, onShowNodes, index }: { 
-  sub: SubscriptionData & { error?: string | null }; 
+  sub: SubscriptionData & { name?: string, error?: string | null }; 
   loading: boolean;
   onShowNodes: (sub: SubscriptionData & { error?: string | null }) => void;
   index: number;
@@ -41,7 +44,7 @@ function SubscriptionCard({ sub, loading, onShowNodes, index }: {
     >
       <div className="flex justify-between items-center mb-5">
         <h2 className="text-xl font-bold bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent">
-          订阅 {index + 1}
+          {sub.name || `订阅 ${index + 1}`}
         </h2>
         <button 
           onClick={() => onShowNodes(sub)}
@@ -127,13 +130,20 @@ export default function Home() {
   const [selectedNodes, setSelectedNodes] = useState<Node[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [error, setError] = useState<string | undefined>();
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
+    // 设置所有订阅的初始加载状态
+    setLoading(prev => ({ ...prev, all: true }));
+
     fetch('/api/urls')
       .then(res => res.json())
-      .then(urls => {
-        const placeholders = urls.map((url: string, index: number) => ({
-          url,
+      .then(subscriptions => {
+        const placeholders = subscriptions.map((sub: { name: string, url: string }) => ({
+          url: sub.url,
+          name: sub.name,
           info: {
             upload: 0,
             download: 0,
@@ -145,23 +155,36 @@ export default function Home() {
         }));
         setSubscriptions(placeholders);
         
-        urls.forEach((url: string, index: number) => {
-          setLoading(prev => ({ ...prev, [url]: true }));
-          fetch(`/api/nodes/${encodeURIComponent(url)}`)
-            .then(res => res.json())
-            .then(data => {
-              setSubscriptions(prev => {
-                const updated = [...prev];
-                updated[index] = data;
-                return updated;
-              });
-            })
-            .finally(() => {
-              setLoading(prev => ({ ...prev, [url]: false }));
-            });
-        });
+        fetch('/api/nodes')
+          .then(res => res.json())
+          .then(results => {
+            if (Array.isArray(results)) {
+              setSubscriptions(prev => 
+                prev.map(sub => {
+                  const matchingResult = results.find(r => r.url === sub.url);
+                  return matchingResult ? { 
+                    ...matchingResult,
+                    name: sub.name || matchingResult.name 
+                  } : sub;
+                })
+              );
+            }
+          })
+          .catch(error => {
+            console.error('Failed to fetch nodes:', error);
+          })
+          .finally(() => {
+            // 更新所有订阅的加载状态
+            setLoading({});
+          });
       });
   }, []);
+
+  useEffect(() => {
+    if (searchParams.get('showLogin') === 'true') {
+      setIsLoginOpen(true);
+    }
+  }, [searchParams]);
 
   const handleShowNodes = (sub: SubscriptionData & { error?: string | null }) => {
     if (sub.error || !sub.nodes.length) {
@@ -180,9 +203,17 @@ export default function Home() {
 
   return (
     <main className="p-6">
-      <h1 className="text-2xl font-bold mb-6 bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent">
-        订阅信息
-      </h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent">
+          订阅信息
+        </h1>
+        <button
+          onClick={() => setIsLoginOpen(true)}
+          className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+        >
+          管理订阅
+        </button>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {subscriptions.map((sub, index) => (
@@ -204,6 +235,16 @@ export default function Home() {
         }}
         nodes={selectedNodes}
         error={error}
+      />
+
+      <LoginDialog 
+        isOpen={isLoginOpen}
+        onClose={() => setIsLoginOpen(false)}
+        onLogin={(success) => {
+          if (success) {
+            router.push('/admin/subscriptions');
+          }
+        }}
       />
     </main>
   );

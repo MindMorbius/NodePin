@@ -2,15 +2,18 @@ import { getSubscribeUrls } from '@/utils/env';
 import { parseSubscription } from '@/utils/clash';
 
 export async function fetchSubscriptionNodes(specificUrls?: string[]) {
-  const urls = specificUrls || getSubscribeUrls();
+  const subscriptions = specificUrls 
+    ? specificUrls.map(url => ({ name: '', url }))  // 如果传入URL数组，转换为subscription格式
+    : await getSubscribeUrls();
+    
   const results = await Promise.allSettled(
-    urls.map(async url => {
-      if (!isValidUrl(url)) {
+    subscriptions.map(async sub => {
+      if (!isValidUrl(sub.url)) {
         throw new Error('Invalid URL format');
       }
       
       try {
-        const data = await parseSubscription(url);
+        const data = await parseSubscription(sub.url);
         const filteredNodes = data.nodes.filter(node => {
           const invalidKeywords = ['剩余', '过期', '到期', '流量', 'expire', 'traffic', '官网', '（看这里）', '.ink', '套餐', '网址', '链接', '订阅', '更新', 't.me', '.com', '邀请', '返利', '新用户'];
           const nameHasInvalidKeyword = invalidKeywords.some(keyword => 
@@ -23,7 +26,8 @@ export async function fetchSubscriptionNodes(specificUrls?: string[]) {
         });
 
         return {
-          url,
+          url: sub.url,
+          name: sub.name,
           info: data.info,
           nodes: filteredNodes,
           error: null

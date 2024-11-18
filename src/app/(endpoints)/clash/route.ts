@@ -34,7 +34,7 @@ export async function GET() {
 
     const subscriptionInfos = results.map(r => r.info);
     
-    const subscriptionGroups = results.map((_, index) => {
+    const subscriptionGroups = results.map((result, index) => {
       const subNodes = allNodes.filter((_, nodeIndex) => 
         Math.floor(nodeIndex / (allNodes.length / results.length)) === index
       );
@@ -44,8 +44,11 @@ export async function GET() {
       const trafficInfo = `📊${formatBytes(usedTraffic)}/${formatBytes(subInfo.total)}`;
       const expireInfo = `⌛${formatExpireDate(subInfo.expire)}`;
       
+      // 使用订阅名称或默认名称
+      const subName = result.name || `订阅 ${index + 1}`;
+      
       return {
-        name: `🔰 订阅 ${index + 1} | ${trafficInfo} | ${expireInfo}`,
+        name: `🔰 ${subName} | ${trafficInfo} | ${expireInfo}`,
         type: 'select',
         proxies: [...subNodes.map(node => node.name)]
       };
