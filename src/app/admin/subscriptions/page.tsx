@@ -286,9 +286,9 @@ export default function SubscriptionManagement() {
                 </>
               ) : (
                 <>
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <div className="font-medium">{sub.name}</div>
-                    <div className="text-sm text-gray-500">{sub.url}</div>
+                    <div className="text-sm text-gray-500 break-all">{sub.url}</div>
                     {sub.info && (
                       <div className="text-xs text-gray-400 mt-1">
                         节点数: {sub.nodes?.length || 0} | 
@@ -415,7 +415,7 @@ export default function SubscriptionManagement() {
               fetchSubscriptions(newPage);
             }}
             disabled={page === 1 || loading}
-            className="px-3 py-1 rounded bg-gray-100 disabled:opacity-50"
+            className="px-3 py-1 rounded bg-[var(--card)] hover:bg-[var(--card-hover)] disabled:opacity-50 transition-colors"
           >
             上一页
           </button>
@@ -429,7 +429,7 @@ export default function SubscriptionManagement() {
               fetchSubscriptions(newPage);
             }}
             disabled={page === totalPages || loading}
-            className="px-3 py-1 rounded bg-gray-100 disabled:opacity-50"
+            className="px-3 py-1 rounded bg-[var(--card)] hover:bg-[var(--card-hover)] disabled:opacity-50 transition-colors"
           >
             下一页
           </button>

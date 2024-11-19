@@ -1,5 +1,5 @@
 import { Collection, Document, Filter, FindOptions } from 'mongodb';
-import clientPromise from './mongodb';
+import clientPromise, { connectDB } from './mongodb';
 
 interface PaginatedResponse<T> {
   total: number;
@@ -15,90 +15,114 @@ interface QueryOptions extends FindOptions {
 
 export class MongoDBClient<T extends Document> {
   private collectionName: string;
+  private connectionPromise: Promise<void>;
   
   constructor(collectionName: string) {
     this.collectionName = collectionName;
+    this.connectionPromise = this.testConnection();
+  }
+
+  private async testConnection(): Promise<void> {
+    try {
+      await connectDB();
+    } catch (error) {
+      console.error('Database connection test failed:', error);
+      throw new Error('Database connection failed');
+    }
   }
 
   private async getCollection(): Promise<Collection<T>> {
+    await this.connectionPromise;
     const client = await clientPromise;
     return client.db().collection<T>(this.collectionName);
+  }
+
+  private async withErrorHandling<R>(operation: () => Promise<R>): Promise<R> {
+    try {
+      return await operation();
+    } catch (error) {
+      console.error(`Database operation failed:`, error);
+      throw new Error('Database error');
+    }
   }
 
   async findWithCount(
     filter: Filter<T> = {},
     options: QueryOptions = {}
   ): Promise<PaginatedResponse<T>> {
-    const collection = await this.getCollection();
-    
-    // 首先获取总数
-    const countPromise = collection.countDocuments(filter);
-    
-    // 处理分页
-    const { page = 1, pageSize = 10, ...findOptions } = options;
-    const skip = (page - 1) * pageSize;
-    
-    // 获取分页数据
-    const dataPromise = collection
-      .find(filter, findOptions)
-      .skip(skip)
-      .limit(pageSize)
-      .toArray();
+    return this.withErrorHandling(async () => {
+      const collection = await this.getCollection();
+      
+      const countPromise = collection.countDocuments(filter);
+      const { page = 1, pageSize = 10, ...findOptions } = options;
+      const skip = (page - 1) * pageSize;
+      
+      const dataPromise = collection
+        .find(filter, findOptions)
+        .skip(skip)
+        .limit(pageSize)
+        .toArray();
 
-    // 并行执行查询
-    const [total, data] = await Promise.all([countPromise, dataPromise]);
+      const [total, data] = await Promise.all([countPromise, dataPromise]);
 
-    return {
-      total,
-      page,
-      pageSize,
-      data
-    };
+      return {
+        total,
+        page,
+        pageSize,
+        data
+      };
+    });
   }
 
-  // 快速计数
   async count(filter: Filter<T> = {}): Promise<number> {
-    const collection = await this.getCollection();
-    return collection.countDocuments(filter);
+    return this.withErrorHandling(async () => {
+      const collection = await this.getCollection();
+      return collection.countDocuments(filter);
+    });
   }
 
-  // 插入单条数据
   async insertOne(doc: Partial<T>): Promise<T> {
-    const collection = await this.getCollection();
-    const result = await collection.insertOne(doc as any);
-    return { ...doc, _id: result.insertedId } as T;
+    return this.withErrorHandling(async () => {
+      const collection = await this.getCollection();
+      const result = await collection.insertOne(doc as any);
+      return { ...doc, _id: result.insertedId } as T;
+    });
   }
 
-  // 插入多条数据
   async insertMany(docs: Partial<T>[]): Promise<T[]> {
-    const collection = await this.getCollection();
-    const result = await collection.insertMany(docs as any[]);
-    return docs.map((doc, index) => ({
-      ...doc,
-      _id: result.insertedIds[index]
-    })) as T[];
+    return this.withErrorHandling(async () => {
+      const collection = await this.getCollection();
+      const result = await collection.insertMany(docs as any[]);
+      return docs.map((doc, index) => ({
+        ...doc,
+        _id: result.insertedIds[index]
+      })) as T[];
+    });
   }
 
-  // 更新数据
   async updateOne(
     filter: Filter<T>,
     update: Partial<T>
   ): Promise<boolean> {
-    const collection = await this.getCollection();
-    const result = await collection.updateOne(filter, { $set: update });
-    return result.modifiedCount > 0;
+    return this.withErrorHandling(async () => {
+      const collection = await this.getCollection();
+      const result = await collection.updateOne(filter, { $set: update });
+      return result.modifiedCount > 0;
+    });
   }
 
-  // 删除数据
   async deleteOne(filter: Filter<T>): Promise<boolean> {
-    const collection = await this.getCollection();
-    const result = await collection.deleteOne(filter);
-    return result.deletedCount > 0;
+    return this.withErrorHandling(async () => {
+      const collection = await this.getCollection();
+      const result = await collection.deleteOne(filter);
+      return result.deletedCount > 0;
+    });
   }
 
-  // 聚合查询
   async aggregate(pipeline: Document[]): Promise<T[]> {
-    const collection = await this.getCollection();
-    return collection.aggregate<T>(pipeline).toArray();
+    return this.withErrorHandling(async () => {
+      const collection = await this.getCollection();
+      return collection.aggregate<T>(pipeline).toArray();
+    });
   }
 } 
