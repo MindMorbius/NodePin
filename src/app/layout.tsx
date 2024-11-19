@@ -3,6 +3,8 @@ import localFont from "next/font/local";
 import { AuthProvider } from '@/contexts/AuthContext';
 import "./globals.css";
 import { initDatabase } from '@/lib/db-init';
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -41,6 +43,8 @@ export default function RootLayout({
         <AuthProvider>
           {children}
         </AuthProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

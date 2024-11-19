@@ -11,6 +11,8 @@
   "dependencies": {
     "@headlessui/react": "^2.2.0",
     "@heroicons/react": "^2.1.5",
+    "@vercel/analytics": "^1.4.0",
+    "@vercel/speed-insights": "^1.1.0",
     "axios": "^1.7.7",
     "js-yaml": "^4.1.0",
     "lucide-react": "^0.460.0",
