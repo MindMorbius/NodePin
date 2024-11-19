@@ -2,15 +2,10 @@ import { NextResponse } from 'next/server';
 import { fetchSubscriptionNodes } from '@/services/subscription';
 import { getSubscribeUrls } from '@/services/subscription-store';
 
-export const runtime = 'edge';
-
 // 获取所有节点
-export async function GET(
-  request: Request,
-  { env }: { env: any }
-) {
+export async function GET() {
   try {
-    const subscriptions = await getSubscribeUrls(env);
+    const subscriptions = await getSubscribeUrls();
     const urls = subscriptions.map(sub => sub.url);
     const results = await fetchSubscriptionNodes(urls);
     

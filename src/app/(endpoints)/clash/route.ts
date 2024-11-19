@@ -3,8 +3,6 @@ import yaml from 'js-yaml';
 import { fetchSubscriptionNodes } from '@/services/subscription';
 import { Node } from '@/types/clash';
 
-export const runtime = 'edge';
-
 export async function GET() {
   try {
     const results = await fetchSubscriptionNodes();

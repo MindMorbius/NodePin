@@ -189,6 +189,12 @@ export default function SubscriptionManagement() {
     return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
   }
 
+  // 添加 formatExpireDate 辅助函数
+  function formatExpireDate(timestamp: number) {
+    if (!timestamp || timestamp < Date.now() / 1000) return '未知';
+    return new Date(timestamp * 1000).toLocaleDateString('zh-CN');
+  }
+
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
@@ -272,6 +278,13 @@ export default function SubscriptionManagement() {
                   <div>
                     <div className="font-medium">{sub.name}</div>
                     <div className="text-sm text-gray-500">{sub.url}</div>
+                    {sub.info && (
+                      <div className="text-xs text-gray-400 mt-1">
+                        节点数: {sub.nodes?.length || 0} | 
+                        已用: {formatBytes(sub.info.upload + sub.info.download)} / {formatBytes(sub.info.total)} | 
+                        到期: {formatExpireDate(sub.info.expire)}
+                      </div>
+                    )}
                   </div>
                   <div className="flex gap-2">
                     <button

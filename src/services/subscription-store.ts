@@ -1,50 +1,44 @@
-import type { D1Database } from '@cloudflare/workers-types';
+import clientPromise from '@/lib/mongodb'
 
 interface Subscription {
   name: string;
   url: string;
 }
 
-interface Env {
-  DB: D1Database;
-}
-
-export async function getSubscribeUrls(env?: Env): Promise<Subscription[]> {
+export async function getSubscribeUrls(): Promise<Subscription[]> {
   try {
-    console.log('[DB] Starting to fetch subscriptions');
-    const subs: Subscription[] = [];
+    console.log('[DB] Starting to fetch subscriptions')
+    const subs: Subscription[] = []
     
     // 从环境变量获取
-    let index = 1;
+    let index = 1
     while (true) {
-      const url = process.env[`SUB_URL_${index}`];
-      if (!url) break;
-      console.log(`[ENV] Found SUB_URL_${index}:`, url);
+      const url = process.env[`SUB_URL_${index}`]
+      if (!url) break
+      console.log(`[ENV] Found SUB_URL_${index}:`, url)
       subs.push({
         name: `订阅 ${index}`,
         url
-      });
-      index++;
+      })
+      index++
     }
 
-    // 从数据库获取
-    if (env?.DB) {
-      console.log('[DB] Database connection exists, executing query...');
-      const { results, success, error } = await env.DB
-        .prepare('SELECT name, url FROM subscriptions ORDER BY created_at DESC')
-        .all<Subscription>();
-      
-      console.log('[DB] Query results:', { success, error, count: results?.length });
-      if (results) subs.push(...results);
-    } else {
-      console.log('[DB] No database connection available');
-    }
+    // 从 MongoDB 获取
+    const client = await clientPromise
+    const collection = client.db().collection('subscriptions')
+    const results = await collection.find({}).toArray()
+    
+    console.log('[DB] Query results:', { count: results?.length })
+    subs.push(...results.map(doc => ({
+      name: doc.name,
+      url: doc.url
+    })))
 
-    const final = [...new Map(subs.map(sub => [sub.url, sub])).values()];
-    console.log('[DB] Final subscriptions count:', final.length);
-    return final;
+    const final = [...new Map(subs.map(sub => [sub.url, sub])).values()]
+    console.log('[DB] Final subscriptions count:', final.length)
+    return final
   } catch (error) {
-    console.error('[DB] Failed to get subscriptions:', error);
-    throw error;
+    console.error('[DB] Failed to get subscriptions:', error)
+    throw error
   }
 }
