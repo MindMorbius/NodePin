@@ -17,10 +17,14 @@ export async function GET() {
       };
     });
     
-    return NextResponse.json(resultsWithNames);
+    return NextResponse.json({
+      success: true,
+      data: resultsWithNames
+    });
   } catch (error) {
     console.error('Failed to fetch nodes:', error);
     return NextResponse.json({ 
+      success: false,
       error: 'Failed to fetch subscription data',
       details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });

@@ -1,23 +1,33 @@
 import { NextResponse } from 'next/server';
-import clientPromise from '@/lib/mongodb';
-import { ObjectId } from 'mongodb';
+import { MongoDBClient } from '@/lib/mongodb-client';
 import { Subscription } from '@/types/subscription';
 
-export const runtime = 'nodejs';
+const subscriptionDB = new MongoDBClient<Subscription>('subscriptions');
 
-// 获取所有订阅
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const client = await clientPromise;
-    const collection = client.db().collection<Subscription>('subscriptions');
-    const subs = await collection.find({}).toArray();
-    return NextResponse.json(subs);
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const pageSize = parseInt(searchParams.get('pageSize') || '10');
+
+    const result = await subscriptionDB.findWithCount({}, {
+      page,
+      pageSize,
+      sort: { created_at: -1 }
+    });
+
+    return NextResponse.json({
+      success: true,
+      ...result
+    });
   } catch (error) {
-    return NextResponse.json({ error: 'Database error' }, { status: 500 });
+    return NextResponse.json({ 
+      success: false, 
+      error: 'Database error' 
+    }, { status: 500 });
   }
 }
 
-// 添加订阅
 export async function POST(request: Request) {
   try {
     const { name, url } = await request.json();
@@ -29,19 +39,14 @@ export async function POST(request: Request) {
       }, { status: 400 });
     }
 
-    const client = await clientPromise;
-    const collection = client.db().collection<Subscription>('subscriptions');
-    
-    const subscription: Omit<Subscription, '_id'> = {
+    const subscription = await subscriptionDB.insertOne({
       name,
       url,
       created_at: new Date()
-    };
+    });
 
-    await collection.insertOne(subscription);
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, data: subscription });
   } catch (error) {
-    // 处理唯一索引冲突
     if ((error as any).code === 11000) {
       return NextResponse.json({ 
         success: false, 
@@ -56,21 +61,17 @@ export async function POST(request: Request) {
   }
 }
 
-// 更新订阅
 export async function PUT(request: Request) {
   try {
     const { oldUrl, name, url } = await request.json();
     
-    const client = await clientPromise;
-    const collection = client.db().collection<Subscription>('subscriptions');
-
     // 检查新 URL 是否与其他订阅冲突
     if (oldUrl !== url) {
-      const existing = await collection.findOne({ 
+      const existing = await subscriptionDB.findWithCount({ 
         url,
-        _id: { $ne: new ObjectId(oldUrl) }
+        _id: { $ne: oldUrl }
       });
-      if (existing) {
+      if (existing.total > 0) {
         return NextResponse.json({ 
           success: false, 
           error: 'New URL already exists'
@@ -78,12 +79,12 @@ export async function PUT(request: Request) {
       }
     }
     
-    const result = await collection.updateOne(
+    const success = await subscriptionDB.updateOne(
       { url: oldUrl },
-      { $set: { name, url, updated_at: new Date() } }
+      { name, url, updated_at: new Date() }
     );
 
-    if (result.matchedCount === 0) {
+    if (!success) {
       return NextResponse.json({
         success: false,
         error: 'Subscription not found'
@@ -99,17 +100,12 @@ export async function PUT(request: Request) {
   }
 }
 
-// 删除订阅
 export async function DELETE(request: Request) {
   try {
     const { url } = await request.json();
-    
-    const client = await clientPromise;
-    const collection = client.db().collection<Subscription>('subscriptions');
-    
-    const result = await collection.deleteOne({ url });
+    const success = await subscriptionDB.deleteOne({ url });
 
-    if (result.deletedCount === 0) {
+    if (!success) {
       return NextResponse.json({
         success: false,
         error: 'Subscription not found'

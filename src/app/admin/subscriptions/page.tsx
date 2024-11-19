@@ -11,10 +11,19 @@ import { api } from '@/utils/api';
 interface Subscription {
   name: string;
   url: string;
-  isEnv?: boolean;  // 标记是否来自环境变量
+  isEnv?: boolean;
   info?: SubscriptionInfo;
   nodes?: Node[];
   loading?: boolean;
+  created_at?: Date;
+}
+
+interface PaginatedResponse<T> {
+  success: boolean;
+  total: number;
+  page: number;
+  pageSize: number;
+  data: T[];
 }
 
 export default function SubscriptionManagement() {
@@ -26,32 +35,47 @@ export default function SubscriptionManagement() {
   const [showEnvSubs, setShowEnvSubs] = useState(false);
   const [selectedNodes, setSelectedNodes] = useState<Node[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    // 进入页面时重新检查登录状态
-    checkAuth().then(isAuth => {
-      if (!isAuth) {
-        router.push('/');
-      }
-    });
-  }, []);
+  const fetchSubscriptions = async (pageNum: number = 1) => {
+    setLoading(true);
+    try {
+      const response = await api.get<PaginatedResponse<Subscription>>('/admin/subscriptions', {
+        params: {
+          page: pageNum,
+          pageSize: 10
+        }
+      });
 
-  useEffect(() => {
-    // 更新获取订阅列表的API
-    api.get<Subscription[]>('/admin/subscriptions')
-      .then(response => {
-        const processed = response.data.map((sub: Subscription) => ({
+      if (response.data.success) {
+        const processed = response.data.data.map(sub => ({
           ...sub,
           isEnv: sub.name.startsWith('订阅 ') && /^\d+$/.test(sub.name.split(' ')[1])
         }));
         setSubs(processed);
-      })
-      .catch(() => router.push('/'));
-  }, []);
 
-  // 分离环境变量和数据库的订阅
-  const envSubs = subs.filter(sub => sub.isEnv);
-  const dbSubs = subs.filter(sub => !sub.isEnv);
+        
+        setTotalPages(Math.ceil(response.data.total / response.data.pageSize));
+      }
+    } catch (error) {
+      console.error('Failed to fetch subscriptions:', error);
+      router.push('/');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    checkAuth().then(isAuth => {
+      if (!isAuth) {
+        router.push('/');
+      } else {
+        fetchSubscriptions();
+      }
+    });
+  }, []);
 
   function isValidUrl(url: string): boolean {
     try {
@@ -61,24 +85,20 @@ export default function SubscriptionManagement() {
       return false;
     }
   }
-
   const handleAdd = async () => {
-    if (!newSub.name) {
-      alert("名称不能为空");
-      return;
-    }
-    
-    if (!isValidUrl(newSub.url)) {
-      alert("请输入有效的网址");
+    if (!newSub.name || !isValidUrl(newSub.url)) {
+      alert(newSub.name ? "请输入有效的网址" : "名称不能为空");
       return;
     }
     
     try {
-      await api.post('/admin/subscriptions', newSub);
-      setSubs(prev => [...prev, { ...newSub, isEnv: false }]);
-      setNewSub({ name: '', url: '' });
+      const response = await api.post<{ success: boolean; data: Subscription }>('/admin/subscriptions', newSub);
+      if (response.data.success) {
+        setSubs(prev => [...prev, { ...response.data.data, isEnv: false }]);
+        setNewSub({ name: '', url: '' });
+      }
     } catch (error) {
-      alert('添加失败');
+      alert(error instanceof Error ? error.message : '添加失败');
     }
   };
 
@@ -86,32 +106,39 @@ export default function SubscriptionManagement() {
     if (!editingSub) return;
     
     try {
-      await api.put('/admin/subscriptions', { 
+      const response = await api.put<{ success: boolean }>('/admin/subscriptions', { 
         oldUrl,
         ...editingSub
       });
-      setSubs(prev => prev.map(sub => 
-        sub.url === oldUrl ? { ...editingSub, isEnv: false } : sub
-      ));
-      setEditingSub(null);
+      
+      if (response.data.success) {
+        setSubs(prev => prev.map(sub => 
+          sub.url === oldUrl ? { ...editingSub, isEnv: false } : sub
+        ));
+        setEditingSub(null);
+      }
     } catch (error) {
-      alert('更新失败');
+      alert(error instanceof Error ? error.message : '更新失败');
     }
   };
 
   const handleDelete = async (url: string) => {
+    if (!confirm('确定要删除这个订阅吗？')) return;
+    
     try {
-      await api.delete('/admin/subscriptions', {
+      const response = await api.delete<{ success: boolean }>('/admin/subscriptions', {
         data: { url }
       });
-      setSubs(prev => prev.filter(sub => sub.url !== url));
+      
+      if (response.data.success) {
+        setSubs(prev => prev.filter(sub => sub.url !== url));
+      }
     } catch (error) {
-      alert('删除失败');
+      alert(error instanceof Error ? error.message : '删除失败');
     }
   };
 
   const handleFetchInfo = async (sub: Subscription) => {
-    // 首先更新loading状态
     setSubs(currentSubs => {
       const newSubs = [...currentSubs];
       const index = newSubs.findIndex(s => s.url === sub.url);
@@ -126,7 +153,6 @@ export default function SubscriptionManagement() {
         url: sub.url 
       });
       
-      // 使用函数式更新来确保基于最新状态
       setSubs(currentSubs => {
         const newSubs = [...currentSubs];
         const index = newSubs.findIndex(s => s.url === sub.url);
@@ -134,13 +160,11 @@ export default function SubscriptionManagement() {
         if (index === -1) return currentSubs;
 
         if (!res.data.nodes?.length) {
-          // 处理错误情况
           newSubs[index] = { ...newSubs[index], loading: false };
           alert('未获取到节点数据');
           return newSubs;
         }
 
-        // 更新成功情况
         newSubs[index] = {
           ...newSubs[index],
           loading: false,
@@ -150,7 +174,6 @@ export default function SubscriptionManagement() {
         return newSubs;
       });
     } catch (error) {
-      // 处理请求失败情况
       setSubs(currentSubs => {
         const newSubs = [...currentSubs];
         const index = newSubs.findIndex(s => s.url === sub.url);
@@ -170,7 +193,6 @@ export default function SubscriptionManagement() {
     }
   };
 
-  // 添加 formatBytes 辅助函数
   function formatBytes(bytes: number) {
     if (bytes === 0) return '0 B';
     const k = 1024;
@@ -179,7 +201,6 @@ export default function SubscriptionManagement() {
     return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
   }
 
-  // 添加 formatExpireDate 辅助函数
   function formatExpireDate(timestamp: number) {
     if (!timestamp || timestamp < Date.now() / 1000) return '未知';
     return new Date(timestamp * 1000).toLocaleDateString('zh-CN');
@@ -230,7 +251,7 @@ export default function SubscriptionManagement() {
         </div>
 
         <div className="space-y-2">
-          {dbSubs.map((sub) => (
+          {subs.map((sub) => (
             <div key={sub.url} className="flex justify-between items-center p-4 bg-[var(--card)] hover:bg-[var(--card-hover)] rounded-lg transition-colors">
               {editingSub?.url === sub.url ? (
                 <>
@@ -318,7 +339,7 @@ export default function SubscriptionManagement() {
           ))}
         </div>
 
-        {envSubs.length > 0 && (
+        {subs.some(sub => sub.isEnv) && (
           <div className="mt-8">
             <button
               onClick={() => setShowEnvSubs(!showEnvSubs)}
@@ -329,12 +350,12 @@ export default function SubscriptionManagement() {
               ) : (
                 <ChevronDownIcon className="w-4 h-4" />
               )}
-              环境变量订阅 ({envSubs.length})
+              环境变量订阅 ({subs.filter(sub => sub.isEnv).length})
             </button>
             
             {showEnvSubs && (
               <div className="space-y-2 mt-2">
-                {envSubs.map((sub) => (
+                {subs.filter(sub => sub.isEnv).map((sub) => (
                   <div key={sub.url} className="flex justify-between items-center p-4 bg-gray-50/50 rounded">
                     <div>
                       <div className="font-medium">{sub.name}</div>
@@ -385,6 +406,35 @@ export default function SubscriptionManagement() {
         onClose={() => setIsDialogOpen(false)}
         nodes={selectedNodes}
       />
+      {totalPages > 1 && (
+        <div className="mt-4 flex justify-center gap-2">
+          <button
+            onClick={() => {
+              const newPage = Math.max(1, page - 1);
+              setPage(newPage);
+              fetchSubscriptions(newPage);
+            }}
+            disabled={page === 1 || loading}
+            className="px-3 py-1 rounded bg-gray-100 disabled:opacity-50"
+          >
+            上一页
+          </button>
+          <span className="px-3 py-1">
+            {page} / {totalPages}
+          </span>
+          <button
+            onClick={() => {
+              const newPage = Math.min(totalPages, page + 1);
+              setPage(newPage);
+              fetchSubscriptions(newPage);
+            }}
+            disabled={page === totalPages || loading}
+            className="px-3 py-1 rounded bg-gray-100 disabled:opacity-50"
+          >
+            下一页
+          </button>
+        </div>
+      )}
     </div>
   );
 } 

@@ -1,9 +1,7 @@
-import clientPromise from '@/lib/mongodb'
+import { MongoDBClient } from '@/lib/mongodb-client';
+import { Subscription } from '@/types/subscription';
 
-interface Subscription {
-  name: string;
-  url: string;
-}
+const subscriptionDB = new MongoDBClient<Subscription>('subscriptions');
 
 export async function getSubscribeUrls(): Promise<Subscription[]> {
   try {
@@ -23,22 +21,19 @@ export async function getSubscribeUrls(): Promise<Subscription[]> {
       index++
     }
 
-    // 从 MongoDB 获取
-    const client = await clientPromise
-    const collection = client.db().collection('subscriptions')
-    const results = await collection.find({}).toArray()
+    // 从 MongoDB 获取所有数据，不使用分页
+    const collection = await subscriptionDB.getCollection();
+    const dbSubs = await collection.find({}).toArray();
+    console.log('[DB] Query results:', { count: dbSubs.length });
     
-    console.log('[DB] Query results:', { count: results?.length })
-    subs.push(...results.map(doc => ({
-      name: doc.name,
-      url: doc.url
-    })))
+    subs.push(...dbSubs);
 
-    const final = [...new Map(subs.map(sub => [sub.url, sub])).values()]
-    console.log('[DB] Final subscriptions count:', final.length)
-    return final
+    // 去重处理
+    const final = [...new Map(subs.map(sub => [sub.url, sub])).values()];
+    console.log('[DB] Final subscriptions count:', final.length);
+    return final;
   } catch (error) {
-    console.error('[DB] Failed to get subscriptions:', error)
-    throw error
+    console.error('[DB] Failed to get subscriptions:', error);
+    throw error;
   }
 }
