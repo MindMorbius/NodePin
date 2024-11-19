@@ -1,12 +1,12 @@
 import yaml from 'js-yaml';
-import { http } from './fetch';
-import { SubscriptionInfo, Node } from '../types/clash';
+import { externalApi } from '@/utils/api';
+import { SubscriptionInfo, Node } from '@/types/clash';
 
 export async function parseSubscription(url: string): Promise<{
   info: SubscriptionInfo;
   nodes: Node[];
 }> {
-  const response = await http.get(url, {
+  const response = await externalApi.get(url, {
     headers: {
       'User-Agent': 'clash.meta',
     }

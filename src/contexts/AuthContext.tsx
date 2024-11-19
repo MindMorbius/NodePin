@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import { api } from '@/utils/api';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -18,8 +19,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkAuth = async () => {
     try {
-      const res = await fetch('/api/auth/check');
-      const isAuth = res.ok;
+      const response = await api.get('/auth/check');
+      const isAuth = response.status === 200;
       setIsAuthenticated(isAuth);
       return isAuth;
     } catch {
@@ -28,20 +29,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // 检查初始认证状态
   useEffect(() => {
     checkAuth();
   }, []);
 
   const login = async (username: string, password: string) => {
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+      const response = await api.post('/auth/login', { 
+        username, 
+        password 
       });
       
-      if (res.ok) {
+      if (response.status === 200) {
         setIsAuthenticated(true);
         return true;
       }
@@ -53,7 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
+      await api.post('/auth/logout');
       setIsAuthenticated(false);
       router.push('/');
     } catch (error) {

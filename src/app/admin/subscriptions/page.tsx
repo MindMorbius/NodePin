@@ -6,6 +6,7 @@ import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '@/contexts/AuthContext';
 import NodeDialog from '@/components/NodeDialog';
 import { SubscriptionInfo, Node } from '@/types/clash';
+import { api } from '@/utils/api';
 
 interface Subscription {
   name: string;
@@ -37,10 +38,9 @@ export default function SubscriptionManagement() {
 
   useEffect(() => {
     // 更新获取订阅列表的API
-    fetch('/api/admin/subscriptions')
-      .then(res => res.json())
-      .then(data => {
-        const processed = data.map((sub: Subscription) => ({
+    api.get<Subscription[]>('/admin/subscriptions')
+      .then(response => {
+        const processed = response.data.map((sub: Subscription) => ({
           ...sub,
           isEnv: sub.name.startsWith('订阅 ') && /^\d+$/.test(sub.name.split(' ')[1])
         }));
@@ -73,47 +73,40 @@ export default function SubscriptionManagement() {
       return;
     }
     
-    const res = await fetch('/api/admin/subscriptions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newSub)
-    });
-
-    if (res.ok) {
-      setSubs(prev => [...prev, newSub]);
+    try {
+      await api.post('/admin/subscriptions', newSub);
+      setSubs(prev => [...prev, { ...newSub, isEnv: false }]);
       setNewSub({ name: '', url: '' });
+    } catch (error) {
+      alert('添加失败');
     }
   };
 
   const handleUpdate = async (oldUrl: string) => {
     if (!editingSub) return;
     
-    const res = await fetch('/api/admin/subscriptions', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
+    try {
+      await api.put('/admin/subscriptions', { 
         oldUrl,
         ...editingSub
-      })
-    });
-
-    if (res.ok) {
+      });
       setSubs(prev => prev.map(sub => 
-        sub.url === oldUrl ? editingSub : sub
+        sub.url === oldUrl ? { ...editingSub, isEnv: false } : sub
       ));
       setEditingSub(null);
+    } catch (error) {
+      alert('更新失败');
     }
   };
 
   const handleDelete = async (url: string) => {
-    const res = await fetch('/api/admin/subscriptions', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url })
-    });
-
-    if (res.ok) {
+    try {
+      await api.delete('/admin/subscriptions', {
+        data: { url }
+      });
       setSubs(prev => prev.filter(sub => sub.url !== url));
+    } catch (error) {
+      alert('删除失败');
     }
   };
 
@@ -129,12 +122,9 @@ export default function SubscriptionManagement() {
     });
 
     try {
-      const res = await fetch('/api/admin/nodes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: sub.url })
+      const res = await api.post<{ info: SubscriptionInfo; nodes: Node[] }>('/admin/nodes', { 
+        url: sub.url 
       });
-      const data = await res.json();
       
       // 使用函数式更新来确保基于最新状态
       setSubs(currentSubs => {
@@ -143,10 +133,10 @@ export default function SubscriptionManagement() {
         
         if (index === -1) return currentSubs;
 
-        if (data.error || !data.nodes?.length) {
+        if (!res.data.nodes?.length) {
           // 处理错误情况
           newSubs[index] = { ...newSubs[index], loading: false };
-          alert(data.error || '未获取到节点数据');
+          alert('未获取到节点数据');
           return newSubs;
         }
 
@@ -154,8 +144,8 @@ export default function SubscriptionManagement() {
         newSubs[index] = {
           ...newSubs[index],
           loading: false,
-          info: data.info,
-          nodes: data.nodes
+          info: res.data.info,
+          nodes: res.data.nodes
         };
         return newSubs;
       });
