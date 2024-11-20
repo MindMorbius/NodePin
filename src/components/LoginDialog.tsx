@@ -1,9 +1,13 @@
+'use client';
+
 import { Dialog } from '@headlessui/react';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 
 export default function LoginDialog() {
+  const { t } = useTranslation();
   const { login, isAuthenticated } = useAuth();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
@@ -37,7 +41,7 @@ export default function LoginDialog() {
         onClick={handleManageClick}
         className="px-4 py-2 bg-[var(--card)] hover:bg-[var(--card-hover)] rounded-lg transition-colors"
       >
-        管理订阅
+        {t('login.manage')}
       </button>
 
       <Dialog 
@@ -48,11 +52,11 @@ export default function LoginDialog() {
         <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
         <div className="fixed inset-0 flex items-center justify-center p-4">
           <Dialog.Panel className="bg-[var(--card)] rounded-xl p-6 w-full max-w-sm ring-1 ring-black/5">
-            <Dialog.Title className="text-lg font-bold mb-4">管理员登录</Dialog.Title>
+            <Dialog.Title className="text-lg font-bold mb-4">{t('login.title')}</Dialog.Title>
             <form onSubmit={handleSubmit} className="space-y-4">
               <input
                 type="text"
-                placeholder="用户名"
+                placeholder={t('login.username')}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="w-full p-2 border rounded"
@@ -60,26 +64,26 @@ export default function LoginDialog() {
               />
               <input
                 type="password"
-                placeholder="密码"
+                placeholder={t('login.password')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full p-2 border rounded"
                 autoComplete="current-password"
               />
-              {error && <p className="text-red-500 text-sm">{error}</p>}
+              {error && <p className="text-red-500 text-sm">{t('login.error')}</p>}
               <div className="flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
                   className="px-4 py-2 bg-[var(--card)] hover:bg-[var(--card-hover)] rounded-lg transition-colors"
                 >
-                  取消
+                  {t('login.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="px-4 py-2 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white rounded-lg transition-colors"
                 >
-                  登录
+                  {t('login.submit')}
                 </button>
               </div>
             </form>

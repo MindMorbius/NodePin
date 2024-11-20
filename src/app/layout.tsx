@@ -4,6 +4,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import "./globals.css";
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import I18nProvider from '@/components/I18nProvider';
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -32,9 +33,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <I18nProvider>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </I18nProvider>
         <Analytics />
         <SpeedInsights />
       </body>
