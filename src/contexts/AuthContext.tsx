@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/utils/api';
 
@@ -15,6 +15,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const router = useRouter();
 
   const checkAuth = async () => {
@@ -26,12 +27,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       setIsAuthenticated(false);
       return false;
+    } finally {
+      setIsInitialized(true);
     }
   };
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
 
   const login = async (username: string, password: string) => {
     try {

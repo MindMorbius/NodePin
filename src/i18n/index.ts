@@ -14,6 +14,7 @@ i18n
       zh: { translation: zh },
       magic: { translation: magic }
     },
+    lng: 'magic',
     fallbackLng: 'magic',
     interpolation: {
       escapeValue: false
