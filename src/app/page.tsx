@@ -8,6 +8,7 @@ import { useSubscriptionStore } from '@/hooks/useSubscriptionStore';
 import StatusBar from '@/components/StatusBar';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitch from '@/components/LanguageSwitch';
+import Link from 'next/link';
 
 interface SubscriptionData {
   id: number;
@@ -281,6 +282,12 @@ export default function Home() {
             />
           ))}
       </div>
+      
+      <footer className="mt-8 text-center text-sm opacity-60">
+        <Link href="/disclaimer" className="hover:underline">
+          @ {t('common.disclaimer')}
+        </Link>
+      </footer>
     </main>
   );
 }

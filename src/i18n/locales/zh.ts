@@ -31,5 +31,18 @@ export default {
     cancel: '取消',
     submit: '登录',
     error: '用户名或密码错误'
+  },
+  disclaimer: {
+    title: '免责声明',
+    usage: '使用条款',
+    usageContent: '本网站仅作为订阅信息的展示工具，不提供任何代理、VPN或其他网络服务。用户在使用本站时应遵守所在地区的相关法律法规。',
+    responsibility: '责任声明',
+    responsibilityContent: '本站对用户使用订阅信息所产生的任何直接或间接后果不承担任何责任。用户应自行承担使用本站服务的风险。',
+    privacy: '隐私政策',
+    privacyContent: '本站仅收集必要的订阅信息用于展示，不会收集或存储用户的个人敏感信息。所有数据传输均采用加密方式进行。'
+  },
+  common: {
+    disclaimer: '免责声明',
+    backToHome: '返回首页'
   }
 }; 

@@ -31,5 +31,18 @@ export default {
     cancel: 'Cancel',
     submit: 'Login',
     error: 'Invalid username or password'
+  },
+  disclaimer: {
+    title: 'Disclaimer',
+    usage: 'Terms of Use',
+    usageContent: 'This website serves only as a display tool for subscription information and does not provide any proxy, VPN, or other network services. Users must comply with relevant local laws and regulations when using this site.',
+    responsibility: 'Liability Statement',
+    responsibilityContent: 'We assume no responsibility for any direct or indirect consequences arising from the use of subscription information. Users shall bear all risks associated with using our services.',
+    privacy: 'Privacy Policy',
+    privacyContent: 'We only collect necessary subscription information for display purposes and do not collect or store users\' sensitive personal information. All data transmission is encrypted.'
+  },
+  common: {
+    disclaimer: 'Disclaimer',
+    backToHome: 'Back to Home'
   }
 }; 
