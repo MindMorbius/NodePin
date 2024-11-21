@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import { AuthProvider } from '@/contexts/AuthContext';
 import "./globals.css";
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
@@ -34,9 +33,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <I18nProvider>
-          <AuthProvider>
-            {children}
-          </AuthProvider>
+          {children}
         </I18nProvider>
         <Analytics />
         <SpeedInsights />

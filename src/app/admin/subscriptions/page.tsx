@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
-import { useAuth } from '@/contexts/AuthContext';
 import NodeDialog from '@/components/NodeDialog';
 import { SubscriptionInfo, Node } from '@/types/clash';
 import { api } from '@/utils/api';
+import { useStore } from '@/stores';
 
 interface Subscription {
   name: string;
@@ -27,7 +27,7 @@ interface PaginatedResponse<T> {
 }
 
 export default function SubscriptionManagement() {
-  const { checkAuth, logout } = useAuth();
+  const { checkAuth, logout } = useStore();
   const router = useRouter();
   const [subs, setSubs] = useState<Subscription[]>([]);
   const [newSub, setNewSub] = useState({ name: '', url: '' });

@@ -1,14 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { SubscriptionInfo } from '@/types/clash';
-import LoginDialog from '@/components/LoginDialog';
-import { api } from '@/utils/api';
-import { useSubscriptionStore } from '@/hooks/useSubscriptionStore';
-import StatusBar from '@/components/StatusBar';
+import { useEffect } from 'react';
+import { useStore } from '@/stores';
 import { useTranslation } from 'react-i18next';
-import LanguageSwitch from '@/components/LanguageSwitch';
+import LoginDialog from '@/components/LoginDialog';
+import StatusBar from '@/components/StatusBar';
 import Link from 'next/link';
+import { SubscriptionInfo } from '@/types/clash';
 
 interface SubscriptionData {
   id: number;
@@ -18,12 +16,6 @@ interface SubscriptionData {
   nodeCount: number;
   loading: boolean;
   status: 'loading' | 'show' | 'hide';
-}
-
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  error?: string;
 }
 
 function SubscriptionCard({ sub, loading }: { 
@@ -155,77 +147,20 @@ function SubscriptionCard({ sub, loading }: {
 
 export default function Home() {
   const { t } = useTranslation();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const store = useSubscriptionStore();
-  const { subscriptions, initialized } = store;
-
-  // 获取单条订阅数据
-  const fetchSingleSubscription = async (sub: SubscriptionData) => {
-    try {
-      const response = await api.post<ApiResponse<{
-        info: SubscriptionInfo;
-        nodeCount: number;
-      }>>('/public/subscriptions', { id: sub.id });
-
-      if (response.data.success && response.data.data.nodeCount > 0) {
-        store.updateSubscription(sub.id, {
-          ...sub,
-          info: response.data.data.info,
-          nodeCount: response.data.data.nodeCount,
-          status: 'show'
-        });
-      } else {
-        store.updateSubscription(sub.id, {
-          ...sub,
-          status: 'hide'
-        });
-      }
-    } catch (error) {
-      store.updateSubscription(sub.id, {
-        ...sub,
-        status: 'hide'
-      });
-    }
-  };
-
-  // 获取数据
-  const fetchData = async () => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const response = await api.get<ApiResponse<{
-        total: number;
-        items: SubscriptionData[];
-      }>>('/public/subscriptions');
-      
-      if (response.data.success) {
-        const items = response.data.data.items.map(item => ({
-          ...item,
-          status: 'loading' as const
-        }));
-        
-        store.saveToStorage(items);
-        
-        // 处理所有订阅
-        for (const sub of items) {
-          await fetchSingleSubscription(sub);
-        }
-      }
-    } catch (error) {
-      setError(error instanceof Error ? error.message : t('subscription.subscriptionError'));
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { 
+    subscriptions, 
+    loading, 
+    error,
+    initialized,
+    fetchSubscriptions 
+  } = useStore();
 
   // 初始加载
   useEffect(() => {
-    if (initialized && store.subscriptions.length === 0) {
-      fetchData();
+    if (!initialized) {
+      fetchSubscriptions();
     }
-  }, [initialized]);
+  }, [initialized, fetchSubscriptions]);
 
   // 在初始化完成前不渲染内容
   if (!initialized) {
@@ -241,13 +176,12 @@ export default function Home() {
         <div className="flex flex-col items-end gap-2">
           <div className="flex gap-4">
             <button
-              onClick={fetchData}
+              onClick={() => fetchSubscriptions()}
               disabled={loading}
               className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
             >
               {loading ? t('subscription.refreshing') : t('subscription.refresh')}
             </button>
-            {/* <LanguageSwitch /> */}
             <LoginDialog />
           </div>
         </div>
@@ -256,14 +190,14 @@ export default function Home() {
       <StatusBar 
         subscriptions={subscriptions} 
         loading={loading}
-        onRefresh={fetchData}
+        onRefresh={fetchSubscriptions}
       />
 
       {error && (
         <div className="mb-6 p-4 bg-red-50 text-red-500 rounded-lg flex justify-between items-center">
           <span>{error}</span>
           <button
-            onClick={fetchData}
+            onClick={() => fetchSubscriptions()}
             className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
           >
             {t('subscription.retry')}

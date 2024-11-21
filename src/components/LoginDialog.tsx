@@ -2,14 +2,15 @@
 
 import { Dialog } from '@headlessui/react';
 import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
+import { useStore } from '@/stores';
 
 export default function LoginDialog() {
   const { t } = useTranslation();
-  const { login, isAuthenticated } = useAuth();
   const router = useRouter();
+  const { isAuthenticated, login } = useStore();
+  
   const [isOpen, setIsOpen] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -23,7 +24,7 @@ export default function LoginDialog() {
       setIsOpen(false);
       router.push('/admin/subscriptions');
     } else {
-      setError('用户名或密码错误');
+      setError(t('login.error'));
     }
   };
 
@@ -70,7 +71,7 @@ export default function LoginDialog() {
                 className="w-full p-2 border rounded"
                 autoComplete="current-password"
               />
-              {error && <p className="text-red-500 text-sm">{t('login.error')}</p>}
+              {error && <p className="text-red-500 text-sm">{error}</p>}
               <div className="flex justify-end gap-2">
                 <button
                   type="button"
