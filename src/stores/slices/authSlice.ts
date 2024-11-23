@@ -1,11 +1,13 @@
 import { StateCreator } from 'zustand';
 import { api } from '@/utils/api';
 import { StoreState } from '../types';
+import { getSession, signIn, signOut } from 'next-auth/react';
 
 export interface AuthSlice {
   isAuthenticated: boolean;
-  login: (username: string, password: string) => Promise<boolean>;
-  logout: () => void;
+  setAuthenticated: (status: boolean) => void;
+  login: () => Promise<boolean>;
+  logout: () => Promise<void>;
   checkAuth: () => Promise<boolean>;
 }
 
@@ -17,28 +19,43 @@ export const createAuthSlice: StateCreator<
 > = (set) => ({
   isAuthenticated: false,
 
-  login: async (username, password) => {
+  setAuthenticated: (status) => {
+    set({ isAuthenticated: status });
+  },
+
+  login: async () => {
     try {
-      const response = await api.post('/auth/login', { username, password });
-      const success = response.status === 200;
+      const result = await signIn('linuxdo', { redirect: false });
+      const success = !result?.error;
       set({ isAuthenticated: success });
       return success;
     } catch (error) {
+      set({ isAuthenticated: false });
       return false;
     }
   },
 
-  logout: () => {
+  logout: async () => {
+    await signOut({ redirect: false });
     set({ isAuthenticated: false });
   },
 
   checkAuth: async () => {
     try {
-      const response = await api.get('/auth/check');
-      const isAuth = response.status === 200;
+      const session = await getSession();
+      if (!session?.user) {
+        set({ isAuthenticated: false });
+        return false;
+      }
+
+      const response = await fetch('/api/auth/check');
+      const data = await response.json();
+      
+      const isAuth = response.ok && data.authenticated;
       set({ isAuthenticated: isAuth });
       return isAuth;
     } catch (error) {
+      console.error('Auth check failed:', error);
       set({ isAuthenticated: false });
       return false;
     }

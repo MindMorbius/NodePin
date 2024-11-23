@@ -7,6 +7,9 @@ import LoginDialog from '@/components/LoginDialog';
 import StatusBar from '@/components/StatusBar';
 import Link from 'next/link';
 import { SubscriptionInfo } from '@/types/clash';
+import UserAvatar from '@/components/UserAvatar';
+import { useRouter } from 'next/navigation';
+import { Cog6ToothIcon } from '@heroicons/react/24/solid';
 
 interface SubscriptionData {
   id: number;
@@ -147,12 +150,15 @@ function SubscriptionCard({ sub, loading }: {
 
 export default function Home() {
   const { t } = useTranslation();
+  const router = useRouter();
   const { 
     subscriptions, 
     loading, 
     error,
     initialized,
-    fetchSubscriptions 
+    fetchSubscriptions,
+    checkAuth,
+    isAuthenticated
   } = useStore();
 
   // 初始加载
@@ -167,23 +173,41 @@ export default function Home() {
     return null;
   }
 
+  const handleAdminClick = async () => {
+    try {
+      const isAuth = await checkAuth();
+      if (isAuth) {
+        router.push('/admin/subscriptions');
+      }
+    } catch (error) {
+      console.error('Admin access failed:', error);
+    }
+  };
+
   return (
     <main className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent">
           {t('subscription.title')}
         </h1>
-        <div className="flex flex-col items-end gap-2">
-          <div className="flex gap-4">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => fetchSubscriptions()}
+            disabled={loading}
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
+          >
+            {loading ? t('subscription.refreshing') : t('subscription.refresh')}
+          </button>
+          {isAuthenticated && (
             <button
-              onClick={() => fetchSubscriptions()}
-              disabled={loading}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
+              onClick={handleAdminClick}
+              className="px-4 py-2 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white rounded-lg transition-colors flex items-center gap-2"
             >
-              {loading ? t('subscription.refreshing') : t('subscription.refresh')}
+              <Cog6ToothIcon className="w-5 h-5" />
+              {t('common.adminPanel')}
             </button>
-            <LoginDialog />
-          </div>
+          )}
+          <UserAvatar />
         </div>
       </div>
 

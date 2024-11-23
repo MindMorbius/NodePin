@@ -43,6 +43,25 @@ export default {
   },
   common: {
     disclaimer: 'Disclaimer',
-    backToHome: 'Back to Home'
+    backToHome: 'Back to Home',
+    language: 'Language',
+    adminPanel: 'Admin Panel',
+    signOut: 'Sign Out',
+    close: 'Close'
+  },
+  login: {
+    manage: 'Manage',
+    login: 'Login',
+    logout: 'Logout',
+    title: 'User Login',
+    github: 'Login with GitHub',
+    error: 'Login failed',
+    withLinuxDo: 'Login with Linux.do',
+    cancel: 'Cancel'
+  },
+  user: {
+    trustLevel: 'Trust Level',
+    active: 'Active',
+    silenced: 'Silenced'
   }
 }; 

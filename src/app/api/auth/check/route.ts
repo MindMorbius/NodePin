@@ -1,13 +1,18 @@
-import { cookies } from 'next/headers';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../[...nextauth]/route';
 import { NextResponse } from 'next/server';
 
 export async function GET() {
-  const cookieStore = cookies();
-  const authCookie = cookieStore.get('auth');
+  try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user) {
+      return NextResponse.json({ authenticated: false }, { status: 401 });
+    }
 
-  if (authCookie?.value) {
-    return new NextResponse(null, { status: 200 });
+    return NextResponse.json({ authenticated: true }, { status: 200 });
+  } catch (error) {
+    console.error('Auth check error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-
-  return new NextResponse(null, { status: 401 });
 } 

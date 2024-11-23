@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  // 需要认证的路径只保留 admin 路径
   const authPaths = [
     '/admin',
     '/api/admin'
@@ -13,9 +12,9 @@ export function middleware(request: NextRequest) {
   );
 
   if (isAuthPath) {
-    const authCookie = request.cookies.get('auth');
+    const sessionToken = request.cookies.get('next-auth.session-token');
     
-    if (!authCookie?.value) {
+    if (!sessionToken?.value) {
       if (request.nextUrl.pathname.startsWith('/api/')) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }

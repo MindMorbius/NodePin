@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
-import { Analytics } from '@vercel/analytics/react';
-import { SpeedInsights } from '@vercel/speed-insights/next';
-import I18nProvider from '@/components/I18nProvider';
+import Providers from '@/components/Providers';
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -17,8 +15,8 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "NodePin | 订阅汇总",
-  description: "汇总订阅，方便管理和使用",
+  title: "NodePin | 订阅聚合",
+  description: "订阅上传、聚合、分发站",
   icons: {
     icon: "/favicon.ico",
   },
@@ -32,11 +30,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <I18nProvider>
+        <Providers>
           {children}
-        </I18nProvider>
-        <Analytics />
-        <SpeedInsights />
+        </Providers>
       </body>
     </html>
   );

@@ -43,6 +43,25 @@ export default {
   },
   common: {
     disclaimer: '快车公告',
-    backToHome: '返回车站'
+    backToHome: '返回车站',
+    language: '语言',
+    adminPanel: '列车调度室',
+    signOut: '调度员离开',
+    close: '关闭'
+  },
+  login: {
+    manage: '进入车站',
+    login: '调度室',
+    logout: '离开',
+    title: '列车调度室',
+    github: '使用 GitHub 通行',
+    error: '调度员身份验证失败',
+    withLinuxDo: '使用 Linux.do 通行',
+    cancel: '取消'
+  },
+  user: {
+    trustLevel: '调度员等级',
+    active: '活跃',
+    silenced: '静音'
   }
 };

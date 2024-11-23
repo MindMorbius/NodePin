@@ -43,6 +43,25 @@ export default {
   },
   common: {
     disclaimer: '免责声明',
-    backToHome: '返回首页'
+    backToHome: '返回首页',
+    language: '语言',
+    adminPanel: '管理面板',
+    signOut: '退出登录',
+    close: '关闭'
+  },
+  login: {
+    manage: '管理订阅',
+    login: '登录',
+    logout: '登出',
+    title: '用户登录',
+    github: '使用 GitHub 登录',
+    error: '登录失败',
+    withLinuxDo: '使用 Linux.do 登录',
+    cancel: '取消'
+  },
+  user: {
+    trustLevel: '信任等级',
+    active: '活跃',
+    silenced: '静音'
   }
 }; 

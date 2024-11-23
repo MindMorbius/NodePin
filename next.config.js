@@ -7,6 +7,10 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true
   }
+  ,
+  images: {
+    domains: ['linux.do']
+  }
 };
 
 module.exports = nextConfig; 
