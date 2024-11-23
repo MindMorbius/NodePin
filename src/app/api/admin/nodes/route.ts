@@ -22,10 +22,9 @@ export async function GET() {
       data: resultsWithNames
     });
   } catch (error) {
-    console.error('Failed to fetch nodes:', error);
     return NextResponse.json({ 
       success: false,
-      error: 'Failed to fetch subscription data',
+      error: 'Failed to fetch nodes',
       details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
   }
@@ -57,7 +56,6 @@ export async function POST(request: Request) {
       info: results[0].info || {},
       nodes: results[0].nodes
     });
-
   } catch (error) {
     return NextResponse.json({ 
       error: error instanceof Error ? error.message : '获取数据失败',

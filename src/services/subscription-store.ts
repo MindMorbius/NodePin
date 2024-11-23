@@ -1,14 +1,11 @@
-import { MongoDBClient } from '@/lib/mongodb-client';
 import { Subscription } from '@/types/subscription';
-
-const subscriptionDB = new MongoDBClient<Subscription>('subscriptions');
 
 export async function getSubscribeUrls(): Promise<Subscription[]> {
   try {
-    console.log('[DB] Starting to fetch subscriptions')
+    console.log('[ENV] Starting to fetch subscriptions')
     const subs: Subscription[] = []
     
-    // 从环境变量获取
+    // 只保留从环境变量获取的逻辑
     let index = 1
     while (true) {
       const url = process.env[`SUB_URL_${index}`]
@@ -21,19 +18,9 @@ export async function getSubscribeUrls(): Promise<Subscription[]> {
       index++
     }
 
-    // 从 MongoDB 获取所有数据，不使用分页
-    const collection = await subscriptionDB.getCollection();
-    const dbSubs = await collection.find({}).toArray();
-    console.log('[DB] Query results:', { count: dbSubs.length });
-    
-    subs.push(...dbSubs);
-
-    // 去重处理
-    const final = [...new Map(subs.map(sub => [sub.url, sub])).values()];
-    console.log('[DB] Final subscriptions count:', final.length);
-    return final;
+    return subs;
   } catch (error) {
-    console.error('[DB] Failed to get subscriptions:', error);
+    console.error('[ENV] Failed to get subscriptions:', error);
     throw error;
   }
 }

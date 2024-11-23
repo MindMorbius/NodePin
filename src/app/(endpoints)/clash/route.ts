@@ -6,6 +6,10 @@ import { Node } from '@/types/clash';
 export async function GET() {
   try {
     const results = await fetchSubscriptionNodes();
+    if (!results?.length) {
+      throw new Error('No valid subscriptions found');
+    }
+    
     const allNodes: any[] = [];
     const nameCount = new Map<string, number>();
     
@@ -125,7 +129,10 @@ export async function GET() {
     });
   } catch (error) {
     console.error('Failed to generate clash config:', error);
-    return new NextResponse('Error generating config', { status: 500 });
+    return new NextResponse(
+      'Error: ' + (error instanceof Error ? error.message : 'Unknown error'), 
+      { status: 500 }
+    );
   }
 }
 
