@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import yaml from 'js-yaml';
-import { fetchSubscriptionNodes } from '@/services/subscription';
+import { fetchSubscriptionNodes } from '@/services/subscription-store';
 import { Node } from '@/types/clash';
 
 export async function GET() {

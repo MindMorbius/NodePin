@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getSubscribeUrls } from '@/services/subscription-store';
-import { fetchSubscriptionNodes } from '@/services/subscription';
+import { getSubscribeUrls, fetchSubscriptionNodes } from '@/services/subscription-store';
 
 export async function GET(request: Request) {
   try {
