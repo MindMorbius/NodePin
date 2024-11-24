@@ -5,11 +5,12 @@ import { Dialog } from '@headlessui/react';
 import { useSession, signOut } from 'next-auth/react';
 import { useTranslation } from 'react-i18next';
 import Image from 'next/image';
-import { UserCircleIcon, XMarkIcon, LanguageIcon, CheckCircleIcon, ArrowPathIcon } from '@heroicons/react/24/solid';
+import { UserCircleIcon, XMarkIcon, LanguageIcon, CheckCircleIcon, ArrowPathIcon, TicketIcon} from '@heroicons/react/24/solid';
 import { useRouter } from 'next/navigation';
 import LoginDialog from './LoginDialog';
 import LanguageSwitch from './LanguageSwitch';
 import { useStore } from '@/stores';
+import { toast } from 'sonner';
 
 const SESSION_TOKEN_KEY = 'last-session-token';
 
@@ -17,9 +18,14 @@ export default function UserAvatar() {
   const router = useRouter();
   const { data: session } = useSession();
   const { t } = useTranslation();
-  const { setAuthenticated, syncUserData, syncStatus, syncError} = useStore();
+  const { setAuthenticated, syncUserData, syncStatus, syncError, getDiscourseUserId } = useStore();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [discourseId, setDiscourseId] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const DISCOURSE_USER_ID_KEY = `discourse-user-id`;
+    return localStorage.getItem(DISCOURSE_USER_ID_KEY);
+  });
 
   useEffect(() => {
     setAuthenticated(!!session);
@@ -33,6 +39,7 @@ export default function UserAvatar() {
       if (lastToken !== currentToken) {
         localStorage.setItem(SESSION_TOKEN_KEY, currentToken);
         syncUserData();
+        handleManualSync();
       }
     }
   }, [session?.user?.id]);
@@ -65,8 +72,22 @@ export default function UserAvatar() {
 
   const handleManualSync = async () => {
     try {
-      await syncUserData();
+      if (!session?.user?.id) return;
+      const DISCOURSE_USER_ID_KEY = `discourse-user-id`;
+      const discourseUserId = await getDiscourseUserId(session.user.id);
+      localStorage.setItem(DISCOURSE_USER_ID_KEY, discourseUserId);
+      setDiscourseId(discourseUserId);
     } catch (error) {
+      toast.error('Sync failed: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    }
+  };
+
+  const getAvatarRingColor = () => {
+    switch (syncStatus) {
+      case 'syncing': return 'ring-blue-500 animate-pulse';
+      case 'success': return 'ring-green-500';
+      case 'error': return 'ring-red-500';
+      default: return 'ring-[var(--primary)] hover:ring-[var(--primary-hover)]';
     }
   };
 
@@ -74,7 +95,7 @@ export default function UserAvatar() {
     <>
       <button
         onClick={handleAvatarClick}
-        className="relative w-10 h-10 rounded-full overflow-hidden ring-2 ring-[var(--primary)] hover:ring-[var(--primary-hover)] transition-all"
+        className={`relative w-10 h-10 rounded-full overflow-hidden ring-2 ${getAvatarRingColor()} transition-all`}
       >
         {session?.user?.image ? (
           <Image
@@ -106,7 +127,7 @@ export default function UserAvatar() {
             {session ? (
               <>
                 <div className="flex items-start gap-4 mb-6 pt-2">
-                  <div className="relative w-16 h-16 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-[var(--primary)]">
+                  <div className={`relative w-16 h-16 rounded-full overflow-hidden flex-shrink-0 ring-2 ${getAvatarRingColor()}`}>
                     {session.user?.image ? (
                       <Image
                         src={session.user.image}
@@ -132,6 +153,28 @@ export default function UserAvatar() {
                 </div>
 
                 <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm px-3 py-1 bg-gray-100 text-gray-700 rounded-full flex flex-col flex-grow">
+                      <div className="flex items-center gap-1">
+                        <TicketIcon className="w-4 h-4 flex-shrink-0 text-center" />
+                        {discourseId || 'Not synced'}
+                      </div>
+                    </span>
+                    {!discourseId && (
+                      <button
+                        onClick={handleManualSync}
+                        className={`p-2 rounded-full hover:bg-gray-100 ${
+                          syncStatus === 'syncing' ? 'animate-spin' : ''
+                        }`}
+                        disabled={syncStatus === 'syncing'}
+                      >
+                        <ArrowPathIcon className={`w-5 h-5 ${getSyncStatusColor()}`} />
+                      </button>
+                    )}
+                  </div>
+                  {syncStatus === 'error' && (
+                    <p className="text-sm text-red-500">{syncError}</p>
+                  )}
                   <div className="flex flex-wrap gap-2">
                     <span className="text-sm px-3 py-1 bg-blue-100 text-blue-700 rounded-full flex items-center gap-1">
                       <UserCircleIcon className="w-4 h-4" />
@@ -169,33 +212,6 @@ export default function UserAvatar() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between pt-2">
-                  <button
-                    onClick={handleManualSync}
-                    disabled={syncStatus === 'syncing'}
-                    className={`px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                      syncStatus === 'syncing' ? 'animate-pulse' : ''
-                    }`}
-                  >
-                    {syncStatus === 'syncing' ? (
-                      <>
-                        <ArrowPathIcon className="w-4 h-4 animate-spin" />
-                        {t('sync.syncing')}
-                      </>
-                    ) : (
-                      <>
-                        <ArrowPathIcon className="w-4 h-4" />
-                        {t('sync.sync')}
-                      </>
-                    )}
-                  </button>
-                  
-                  {syncStatus !== 'idle' && (
-                    <span className={`text-sm ${getSyncStatusColor()}`}>
-                      {getSyncStatusText()}
-                    </span>
-                  )}
-                </div>
                 
               </>
             ) : (

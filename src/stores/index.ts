@@ -60,6 +60,7 @@ export const useSupabase = () => {
     syncError: state.syncError,
     syncUserData: state.syncUserData,
     fetchUserData: state.fetchUserData,
-    updateUserData: state.updateUserData
+    updateUserData: state.updateUserData,
+    getDiscourseUserId: state.getDiscourseUserId
   }));
 }; 
