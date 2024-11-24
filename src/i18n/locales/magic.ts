@@ -63,5 +63,11 @@ export default {
     trustLevel: '调度员等级',
     active: '活跃',
     silenced: '静音'
+  },
+  sync: {
+    sync: '同步调度员身份',
+    syncing: '同步中...',
+    success: '同步成功',
+    error: '同步失败'
   }
 };

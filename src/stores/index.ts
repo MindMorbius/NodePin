@@ -4,13 +4,15 @@ import { StoreState } from './types';
 import { createAuthSlice } from './slices/authSlice';
 import { createI18nSlice } from './slices/i18nSlice';
 import { createSubscriptionSlice } from './slices/subscriptionSlice';
+import { createSupabaseSlice } from './slices/supabaseSlice';
 
 export const useStore = create<StoreState>()(
   persist(
     (...a) => ({
       ...createAuthSlice(...a),
       ...createI18nSlice(...a),
-      ...createSubscriptionSlice(...a)
+      ...createSubscriptionSlice(...a),
+      ...createSupabaseSlice(...a)
     }),
     {
       name: 'app-store',
@@ -49,5 +51,15 @@ export const useSubscription = () => {
     fetchSubscriptions: state.fetchSubscriptions,
     updateSubscription: state.updateSubscription,
     clearSubscriptions: state.clearSubscriptions
+  }));
+};
+
+export const useSupabase = () => {
+  return useStore((state) => ({
+    syncStatus: state.syncStatus,
+    syncError: state.syncError,
+    syncUserData: state.syncUserData,
+    fetchUserData: state.fetchUserData,
+    updateUserData: state.updateUserData
   }));
 }; 

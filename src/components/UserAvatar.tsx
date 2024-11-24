@@ -5,17 +5,18 @@ import { Dialog } from '@headlessui/react';
 import { useSession, signOut } from 'next-auth/react';
 import { useTranslation } from 'react-i18next';
 import Image from 'next/image';
-import { UserCircleIcon, Cog6ToothIcon, XMarkIcon, LanguageIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
+import { UserCircleIcon, XMarkIcon, LanguageIcon, CheckCircleIcon, ArrowPathIcon } from '@heroicons/react/24/solid';
 import { useRouter } from 'next/navigation';
 import LoginDialog from './LoginDialog';
 import LanguageSwitch from './LanguageSwitch';
 import { useStore } from '@/stores';
+import { toast } from 'sonner';
 
 export default function UserAvatar() {
   const router = useRouter();
   const { data: session } = useSession();
   const { t } = useTranslation();
-  const { setAuthenticated } = useStore();
+  const { setAuthenticated, syncUserData, syncStatus, syncError} = useStore();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
 
@@ -23,11 +24,54 @@ export default function UserAvatar() {
     setAuthenticated(!!session);
   }, [session, setAuthenticated]);
 
+  useEffect(() => {
+    if (session?.user) {
+      fetch('/api/auth/sync', { method: 'POST' })
+        .then(async (res) => {
+          toast.info('正在同步账号数据...');
+          if (res.ok) {
+            toast.success('账号数据同步成功');
+          } else {
+            const data = await res.json();
+            throw new Error(data.error || '同步失败');
+          }
+        })
+        .catch((error) => {
+          toast.error(`账号数据同步失败: ${error.message}`);
+        });
+    }
+  }, [session?.user?.id]);
+
   const handleAvatarClick = () => {
     if (session) {
       setIsProfileOpen(true);
     } else {
       setIsLoginOpen(true);
+    }
+  };
+
+  const getSyncStatusColor = () => {
+    switch (syncStatus) {
+      case 'syncing': return 'text-blue-500';
+      case 'success': return 'text-green-500';
+      case 'error': return 'text-red-500';
+      default: return 'text-gray-500';
+    }
+  };
+
+  const getSyncStatusText = () => {
+    switch (syncStatus) {
+      case 'syncing': return t('sync.syncing');
+      case 'success': return t('sync.success');
+      case 'error': return syncError || t('sync.error');
+      default: return '';
+    }
+  };
+
+  const handleManualSync = async () => {
+    try {
+      await syncUserData();
+    } catch (error) {
     }
   };
 
@@ -129,6 +173,35 @@ export default function UserAvatar() {
                     </button>
                   </div>
                 </div>
+
+                <div className="flex items-center justify-between pt-2">
+                  <button
+                    onClick={handleManualSync}
+                    disabled={syncStatus === 'syncing'}
+                    className={`px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                      syncStatus === 'syncing' ? 'animate-pulse' : ''
+                    }`}
+                  >
+                    {syncStatus === 'syncing' ? (
+                      <>
+                        <ArrowPathIcon className="w-4 h-4 animate-spin" />
+                        {t('sync.syncing')}
+                      </>
+                    ) : (
+                      <>
+                        <ArrowPathIcon className="w-4 h-4" />
+                        {t('sync.sync')}
+                      </>
+                    )}
+                  </button>
+                  
+                  {syncStatus !== 'idle' && (
+                    <span className={`text-sm ${getSyncStatusColor()}`}>
+                      {getSyncStatusText()}
+                    </span>
+                  )}
+                </div>
+                
               </>
             ) : (
               <div className="text-center py-8">

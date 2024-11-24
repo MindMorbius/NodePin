@@ -63,5 +63,11 @@ export default {
     trustLevel: '信任等级',
     active: '活跃',
     silenced: '静音'
+  },
+  sync: {
+    sync: '同步数据',
+    syncing: '同步中...',
+    success: '同步成功',
+    error: '同步失败'
   }
 }; 

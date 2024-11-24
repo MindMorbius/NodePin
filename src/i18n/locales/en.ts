@@ -63,5 +63,11 @@ export default {
     trustLevel: 'Trust Level',
     active: 'Active',
     silenced: 'Silenced'
+  },
+  sync: {
+    sync: 'Sync User Data',
+    syncing: 'Syncing...',
+    success: 'Sync Success',
+    error: 'Sync Error'
   }
 }; 
