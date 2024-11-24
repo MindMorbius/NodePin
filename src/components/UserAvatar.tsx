@@ -10,7 +10,8 @@ import { useRouter } from 'next/navigation';
 import LoginDialog from './LoginDialog';
 import LanguageSwitch from './LanguageSwitch';
 import { useStore } from '@/stores';
-import { toast } from 'sonner';
+
+const SESSION_TOKEN_KEY = 'last-session-token';
 
 export default function UserAvatar() {
   const router = useRouter();
@@ -26,19 +27,13 @@ export default function UserAvatar() {
 
   useEffect(() => {
     if (session?.user) {
-      fetch('/api/auth/sync', { method: 'POST' })
-        .then(async (res) => {
-          toast.info('正在同步账号数据...');
-          if (res.ok) {
-            toast.success('账号数据同步成功');
-          } else {
-            const data = await res.json();
-            throw new Error(data.error || '同步失败');
-          }
-        })
-        .catch((error) => {
-          toast.error(`账号数据同步失败: ${error.message}`);
-        });
+      const lastToken = localStorage.getItem(SESSION_TOKEN_KEY);
+      const currentToken = session.accessToken as string;
+
+      if (lastToken !== currentToken) {
+        localStorage.setItem(SESSION_TOKEN_KEY, currentToken);
+        syncUserData();
+      }
     }
   }, [session?.user?.id]);
 

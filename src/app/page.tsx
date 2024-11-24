@@ -3,7 +3,6 @@
 import { useEffect } from 'react';
 import { useStore } from '@/stores';
 import { useTranslation } from 'react-i18next';
-import LoginDialog from '@/components/LoginDialog';
 import StatusBar from '@/components/StatusBar';
 import Link from 'next/link';
 import { SubscriptionInfo } from '@/types/clash';
