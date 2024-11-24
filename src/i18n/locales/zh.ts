@@ -60,6 +60,9 @@ export default {
     cancel: '取消'
   },
   user: {
+    users: '用户列表',
+    name: '姓名',
+    username: '用户名',
     trustLevel: '信任等级',
     active: '活跃',
     silenced: '静音'

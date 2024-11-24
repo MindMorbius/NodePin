@@ -9,6 +9,7 @@ import { SubscriptionInfo } from '@/types/clash';
 import UserAvatar from '@/components/UserAvatar';
 import { useRouter } from 'next/navigation';
 import { Cog6ToothIcon } from '@heroicons/react/24/solid';
+import UserCard from '@/components/UserCard';
 
 interface SubscriptionData {
   id: number;
@@ -157,7 +158,10 @@ export default function Home() {
     initialized,
     fetchSubscriptions,
     checkAuth,
-    isAuthenticated
+    users,
+    usersLoading, 
+    usersError, 
+    fetchUsers
   } = useStore();
 
   // 初始加载
@@ -166,6 +170,11 @@ export default function Home() {
       fetchSubscriptions();
     }
   }, [initialized, fetchSubscriptions]);
+
+  // 初始加载用户数据
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   // 在初始化完成前不渲染内容
   if (!initialized) {
@@ -190,22 +199,22 @@ export default function Home() {
           {t('subscription.title')}
         </h1>
         <div className="flex items-center gap-4">
-          <button
+
+          {/* <button
             onClick={() => fetchSubscriptions()}
             disabled={loading}
             className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
           >
             {loading ? t('subscription.refreshing') : t('subscription.refresh')}
+          </button> */}
+
+          <button
+            onClick={handleAdminClick}
+            className="px-4 py-2 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white rounded-lg transition-colors flex items-center gap-2"
+          >
+            <Cog6ToothIcon className="w-5 h-5" />
+            {t('common.adminPanel')}
           </button>
-          {isAuthenticated && (
-            <button
-              onClick={handleAdminClick}
-              className="px-4 py-2 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white rounded-lg transition-colors flex items-center gap-2"
-            >
-              <Cog6ToothIcon className="w-5 h-5" />
-              {t('common.adminPanel')}
-            </button>
-          )}
           <UserAvatar />
         </div>
       </div>
@@ -240,6 +249,35 @@ export default function Home() {
           ))}
       </div>
       
+      <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent mt-12 mb-6">
+        {t('user.users')}
+      </h2>
+
+      {usersError && (
+        <div className="mb-6 text-red-500">
+          {usersError}
+        </div>
+      )}
+      
+      {usersLoading ? (
+        <div className="flex overflow-x-auto pb-4">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <div 
+              key={`skeleton-${i}`}
+              className="w-[85px] flex-shrink-0 animate-pulse bg-gray-200 h-24 rounded-xl mr-4" 
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="flex overflow-x-auto pb-4">
+          {users.map(user => (
+            <div key={user.id} className="w-[85px] flex-shrink-0">
+              <UserCard user={user} />
+            </div>
+          ))}
+        </div>
+      )}
+
       <footer className="mt-8 text-center text-sm opacity-60">
         <Link href="/disclaimer" className="hover:underline">
           @ {t('common.disclaimer')}

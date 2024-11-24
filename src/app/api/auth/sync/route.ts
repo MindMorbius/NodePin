@@ -1,4 +1,4 @@
-import { supabaseServer } from '@/lib/supabase/server';
+import { supabaseAdmin } from '@/lib/supabase';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../[...nextauth]/route';
 
@@ -9,7 +9,7 @@ export async function POST(req: Request) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { error } = await supabaseServer
+    const { error } = await supabaseAdmin
       .from('discourse_users')
       .upsert({
         discourse_id: session.user.id,

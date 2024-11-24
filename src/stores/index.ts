@@ -5,6 +5,7 @@ import { createAuthSlice } from './slices/authSlice';
 import { createI18nSlice } from './slices/i18nSlice';
 import { createSubscriptionSlice } from './slices/subscriptionSlice';
 import { createSupabaseSlice } from './slices/supabaseSlice';
+import { createUserSlice } from './slices/userSlice';
 
 export const useStore = create<StoreState>()(
   persist(
@@ -12,11 +13,11 @@ export const useStore = create<StoreState>()(
       ...createAuthSlice(...a),
       ...createI18nSlice(...a),
       ...createSubscriptionSlice(...a),
-      ...createSupabaseSlice(...a)
+      ...createSupabaseSlice(...a),
+      ...createUserSlice(...a)
     }),
     {
       name: 'app-store',
-      // 可选：部分持久化
       partialize: (state) => ({
         isAuthenticated: state.isAuthenticated,
         language: state.language
@@ -62,5 +63,14 @@ export const useSupabase = () => {
     fetchUserData: state.fetchUserData,
     updateUserData: state.updateUserData,
     getDiscourseUserId: state.getDiscourseUserId
+  }));
+};
+
+export const useUsers = () => {
+  return useStore((state) => ({
+    users: state.users,
+    usersLoading: state.usersLoading,
+    usersError: state.usersError,
+    fetchUsers: state.fetchUsers
   }));
 }; 

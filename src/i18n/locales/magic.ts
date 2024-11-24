@@ -60,6 +60,9 @@ export default {
     cancel: '取消'
   },
   user: {
+    users: '调度员列表',
+    name: '昵称',
+    username: '用户名',
     trustLevel: '调度员等级',
     active: '活跃',
     silenced: '静音'

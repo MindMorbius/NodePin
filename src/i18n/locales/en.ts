@@ -60,6 +60,9 @@ export default {
     cancel: 'Cancel'
   },
   user: {
+    users: 'Users',
+    name: 'Name',
+    username: 'Username',
     trustLevel: 'Trust Level',
     active: 'Active',
     silenced: 'Silenced'

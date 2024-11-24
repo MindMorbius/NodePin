@@ -1,7 +1,7 @@
 import { StateCreator } from 'zustand';
 import { StoreState } from '../types';
-import { supabaseClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
+import { api } from '@/utils/api'
 
 export interface SupabaseSlice {
   syncStatus: 'idle' | 'syncing' | 'success' | 'error';
@@ -24,16 +24,9 @@ export const createSupabaseSlice: StateCreator<
   syncUserData: async () => {
     try {
       set({ syncStatus: 'syncing', syncError: null });
-      
-      const response = await fetch('/api/auth/sync', {
-        method: 'POST'
-      });
-      
-      if (!response.ok) throw new Error('Sync failed');
-      
+      await api.post('/auth/sync');
       set({ syncStatus: 'success' });
       toast.success('同步成功');
-      
       setTimeout(() => {
         set({ syncStatus: 'idle' });
       }, 3000);
@@ -47,36 +40,22 @@ export const createSupabaseSlice: StateCreator<
   },
 
   fetchUserData: async (userId: string) => {
-    const { data, error } = await supabaseClient
-      .from('discourse_users')
-      .select('*')
-      .eq('discourse_id', userId)
-      .single();
-      
-    if (error) throw error;
+    const { data } = await api.get(`/users/${userId}`);
     return data;
   },
 
-  updateUserData: async (userId: string, data: any) => {
-    const { error } = await supabaseClient
-      .from('discourse_users')
-      .update(data)
-      .eq('discourse_id', userId);
-
-    if (error) throw error;
+  updateUserData: async (userId: string, userData: any) => {
+    await api.put(`/users/${userId}`, userData);
   },
 
   getDiscourseUserId: async (discourseId: string) => {
     try {
       set({ syncStatus: 'syncing', syncError: null });
       toast.info('正在获取 Discourse 用户 ID...');
-      const { data, error } = await supabaseClient
-        .from('discourse_users')
-        .select('id')
-        .eq('discourse_id', discourseId)
-        .single();
-        
-      if (error) throw error;
+      
+      const { data } = await api.get<{ id: string }>('/discourse/getUserId', {
+        params: { discourseId }
+      });
       
       set({ syncStatus: 'success' });
       toast.success('获取 Discourse 用户 ID 成功');
