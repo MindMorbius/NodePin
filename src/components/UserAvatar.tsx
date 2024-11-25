@@ -18,13 +18,13 @@ export default function UserAvatar() {
   const router = useRouter();
   const { data: session } = useSession();
   const { t } = useTranslation();
-  const { setAuthenticated, syncUserData, syncStatus, syncError, getDiscourseUserId } = useStore();
+  const { setAuthenticated, syncUserData, syncStatus, syncError, getUserId } = useStore();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const [discourseId, setDiscourseId] = useState<string | null>(() => {
+  const [userId, setUserId] = useState<string | null>(() => {
     if (typeof window === 'undefined') return null;
-    const DISCOURSE_USER_ID_KEY = `discourse-user-id`;
-    return localStorage.getItem(DISCOURSE_USER_ID_KEY);
+    const USER_ID_KEY = `user-id`;
+    return localStorage.getItem(USER_ID_KEY);
   });
 
   useEffect(() => {
@@ -73,10 +73,10 @@ export default function UserAvatar() {
   const handleManualSync = async () => {
     try {
       if (!session?.user?.id) return;
-      const DISCOURSE_USER_ID_KEY = `discourse-user-id`;
-      const discourseUserId = await getDiscourseUserId(session.user.id);
-      localStorage.setItem(DISCOURSE_USER_ID_KEY, discourseUserId);
-      setDiscourseId(discourseUserId);
+      const USER_ID_KEY = `user-id`;
+      const userId = await getUserId(session.user.id);
+      localStorage.setItem(USER_ID_KEY, userId);
+      setUserId(userId);
     } catch (error) {
       toast.error('Sync failed: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
@@ -157,10 +157,10 @@ export default function UserAvatar() {
                     <span className="text-sm px-3 py-1 bg-gray-100 text-gray-700 rounded-full flex flex-col flex-grow">
                       <div className="flex items-center gap-1">
                         <TicketIcon className="w-4 h-4 flex-shrink-0 text-center" />
-                        {discourseId || 'Not synced'}
+                        {userId || 'Not synced'}
                       </div>
                     </span>
-                    {!discourseId && (
+                    {!userId && (
                       <button
                         onClick={handleManualSync}
                         className={`p-2 rounded-full hover:bg-gray-100 ${

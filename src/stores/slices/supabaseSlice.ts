@@ -9,7 +9,7 @@ export interface SupabaseSlice {
   syncUserData: () => Promise<void>;
   fetchUserData: (userId: string) => Promise<any>;
   updateUserData: (userId: string, data: any) => Promise<void>;
-  getDiscourseUserId: (discourseId: string) => Promise<string>;
+  getUserId: (userId: string) => Promise<string>;
 }
 
 export const createSupabaseSlice: StateCreator<
@@ -48,17 +48,17 @@ export const createSupabaseSlice: StateCreator<
     await api.put(`/users/${userId}`, userData);
   },
 
-  getDiscourseUserId: async (discourseId: string) => {
+  getUserId: async (discourseId: string) => {
     try {
       set({ syncStatus: 'syncing', syncError: null });
-      toast.info('正在获取 Discourse 用户 ID...');
+      toast.info('正在获取 UUID...');
       
-      const { data } = await api.get<{ id: string }>('/discourse/getUserId', {
+      const { data } = await api.get<{ id: string }>('/getUserId', {
         params: { discourseId }
       });
       
       set({ syncStatus: 'success' });
-      toast.success('获取 Discourse 用户 ID 成功');
+      toast.success('获取 UUID 成功');
       setTimeout(() => {
         set({ syncStatus: 'idle' });
       }, 3000);
@@ -69,7 +69,7 @@ export const createSupabaseSlice: StateCreator<
         syncStatus: 'error',
         syncError: error instanceof Error ? error.message : 'Unknown error'
       });
-      toast.error('获取 Discourse 用户 ID 失败: ' + (error instanceof Error ? error.message : '未知错误'));
+      toast.error('获取 UUID 失败: ' + (error instanceof Error ? error.message : '未知错误'));
       throw error;
     }
   },
