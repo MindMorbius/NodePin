@@ -41,7 +41,15 @@ const adminMenus = [
 
 export default function AdminPanel() {
   const router = useRouter();
+  const { checkAuth } = useStore();
 
+  useEffect(() => {
+    checkAuth().then(isAuth => {
+      if (!isAuth) {
+        router.push('/');
+      }
+    });
+  }, []);
 
   return (
     <div className="p-6">

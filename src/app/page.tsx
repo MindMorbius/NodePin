@@ -238,8 +238,8 @@ export default function Home() {
         </div>
       ) : (
         <div className="flex overflow-x-auto pb-4">
-          {users.map(user => (
-            <div key={user.id} className="w-[85px] flex-shrink-0">
+          {users.map((user, index) => (
+            <div key={`user-${user.id}-${index}`} className="w-[85px] flex-shrink-0">
               <UserCard user={user} />
             </div>
           ))}
