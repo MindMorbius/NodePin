@@ -7,20 +7,21 @@ export interface User {
   username: string | null;
   avatar_url: string | null;
   trust_level: number;
+  created_at: string;
 }
 
-export interface UserSlice {
+export interface SupabasePublicSlice {
   users: User[];
   usersLoading: boolean;
   usersError: string | null;
   fetchUsers: () => Promise<void>;
 }
 
-export const createUserSlice: StateCreator<
+export const createSupabasePublicSlice: StateCreator<
   StoreState,
   [],
   [],
-  UserSlice
+  SupabasePublicSlice
 > = (set) => ({
   users: [],
   usersLoading: false,

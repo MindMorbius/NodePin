@@ -5,7 +5,7 @@ import { createAuthSlice } from './slices/authSlice';
 import { createI18nSlice } from './slices/i18nSlice';
 import { createSubscriptionSlice } from './slices/subscriptionSlice';
 import { createSupabaseSlice } from './slices/supabaseSlice';
-import { createUserSlice } from './slices/userSlice';
+import { createSupabasePublicSlice } from './slices/supabasePublicSlice';
 
 export const useStore = create<StoreState>()(
   persist(
@@ -14,7 +14,7 @@ export const useStore = create<StoreState>()(
       ...createI18nSlice(...a),
       ...createSubscriptionSlice(...a),
       ...createSupabaseSlice(...a),
-      ...createUserSlice(...a)
+      ...createSupabasePublicSlice(...a)
     }),
     {
       name: 'app-store',
@@ -62,11 +62,11 @@ export const useSupabase = () => {
     syncUserData: state.syncUserData,
     fetchUserData: state.fetchUserData,
     updateUserData: state.updateUserData,
-    getUserId: state.getUserId
+    getTokenInfo: state.getTokenInfo
   }));
 };
 
-export const useUsers = () => {
+export const useSupabasePublic = () => {
   return useStore((state) => ({
     users: state.users,
     usersLoading: state.usersLoading,

@@ -10,7 +10,10 @@ import i18n from '@/i18n';
 
 export default function Providers({ children }: PropsWithChildren) {
   return (
-    <SessionProvider>
+    <SessionProvider
+      refetchOnWindowFocus={false}
+      refetchWhenOffline={false}
+    >
       <I18nextProvider i18n={i18n}>
         {children}
         <Analytics />

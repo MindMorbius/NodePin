@@ -2,6 +2,7 @@ import { StateCreator } from 'zustand';
 import { api } from '@/utils/api';
 import { StoreState } from '../types';
 import { getSession, signIn, signOut } from 'next-auth/react';
+import { toast } from 'sonner';
 
 export interface AuthSlice {
   isAuthenticated: boolean;
@@ -45,18 +46,39 @@ export const createAuthSlice: StateCreator<
       const session = await getSession();
       if (!session?.user) {
         set({ isAuthenticated: false });
+        await signOut({ redirect: false });
+        toast.error('登录已过期，请重新登录');
+        await signIn('linuxdo', { redirect: false });
         return false;
       }
 
-      const response = await fetch('/api/auth/check');
+      const response = await fetch('/api/auth/check', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          accessToken: session.accessToken
+        })
+      });
       const data = await response.json();
       
-      const isAuth = response.ok && data.authenticated;
+      const isAuth = response.ok && data.valid;
       set({ isAuthenticated: isAuth });
+      
+      if (!isAuth) {
+        await signOut({ redirect: false });
+        toast.error('登录已过期，请重新登录');
+        await signIn('linuxdo', { redirect: false });
+      }
+      
       return isAuth;
     } catch (error) {
       console.error('Auth check failed:', error);
       set({ isAuthenticated: false });
+      await signOut({ redirect: false });
+      toast.error('验证失败，请重新登录');
+      await signIn('linuxdo', { redirect: false });
       return false;
     }
   }

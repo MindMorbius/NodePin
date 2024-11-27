@@ -9,6 +9,7 @@ interface UserCardProps {
     username: string | null;
     avatar_url: string | null;
     trust_level: number;
+    created_at: string;
   };
 }
 
@@ -96,6 +97,16 @@ export default function UserCard({ user }: UserCardProps) {
                         <span className="opacity-75">{t('user.trustLevel')}: </span>
                         <div className={`w-2 h-2 rounded-full ${getTrustLevelColor(user.trust_level)}`} />
                         <span className="font-mono text-sm opacity-75">{user.trust_level}</span>
+                      </div>
+                      <div className="flex items-center gap-2 justify-center flex-wrap">
+                        <span className="opacity-75">{t('user.createdAt')}: </span>
+                        <span className="font-mono text-sm opacity-75">
+                          {new Date(user.created_at).toLocaleDateString(undefined, {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
+                        </span>
                       </div>
                     </div>
                   </div>

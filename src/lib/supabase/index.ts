@@ -11,7 +11,7 @@ const createProxiedFetch = () => {
     return nodeFetch(url, {
       ...init,
       ...(proxyAgent && { agent: proxyAgent }),
-      timeout: 15000,
+      timeout: 30000,
     })
   }
 }

@@ -1,18 +1,27 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '../[...nextauth]/route';
+import { supabaseAdmin } from '@/lib/supabase';
 import { NextResponse } from 'next/server';
 
-export async function GET() {
+export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user) {
-      return NextResponse.json({ authenticated: false }, { status: 401 });
+    const { accessToken } = await request.json();
+
+    if (!accessToken) {
+      return NextResponse.json({ valid: false }, { status: 400 });
     }
 
-    return NextResponse.json({ authenticated: true }, { status: 200 });
+    const { data, error } = await supabaseAdmin.rpc(
+      'is_session_valid_by_token',
+      { p_access_token: accessToken }
+    );
+
+    if (error) throw error;
+
+    return NextResponse.json({ valid: data });
   } catch (error) {
-    console.error('Auth check error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('Session check error:', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
   }
 } 

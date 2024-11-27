@@ -65,7 +65,8 @@ export default {
     username: '用户名',
     trustLevel: '调度员等级',
     active: '活跃',
-    silenced: '静音'
+    silenced: '静音',
+    createdAt: '登记时间'
   },
   sync: {
     sync: '同步调度员身份',

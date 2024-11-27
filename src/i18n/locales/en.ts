@@ -65,7 +65,8 @@ export default {
     username: 'Username',
     trustLevel: 'Trust Level',
     active: 'Active',
-    silenced: 'Silenced'
+    silenced: 'Silenced',
+    createdAt: 'Created At'
   },
   sync: {
     sync: 'Sync User Data',

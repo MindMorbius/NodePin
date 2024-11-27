@@ -65,7 +65,8 @@ export default {
     username: '用户名',
     trustLevel: '信任等级',
     active: '活跃',
-    silenced: '静音'
+    silenced: '静音',
+    createdAt: '创建时间'
   },
   sync: {
     sync: '同步数据',

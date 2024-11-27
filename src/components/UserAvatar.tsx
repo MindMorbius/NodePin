@@ -11,14 +11,23 @@ import LoginDialog from './LoginDialog';
 import LanguageSwitch from './LanguageSwitch';
 import { useStore } from '@/stores';
 import { toast } from 'sonner';
+import { format } from 'date-fns';
 
 const SESSION_TOKEN_KEY = 'last-session-token';
+
+interface TokenInfo {
+  userId: string;
+  exp: number;
+  nbf: number;
+  iat: number;
+  signature: string;
+}
 
 export default function UserAvatar() {
   const router = useRouter();
   const { data: session } = useSession();
   const { t } = useTranslation();
-  const { setAuthenticated, syncUserData, syncStatus, syncError, getUserId } = useStore();
+  const { setAuthenticated, syncUserData, syncStatus, syncError, getTokenInfo } = useStore();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [userId, setUserId] = useState<string | null>(() => {
@@ -26,6 +35,7 @@ export default function UserAvatar() {
     const USER_ID_KEY = `user-id`;
     return localStorage.getItem(USER_ID_KEY);
   });
+  const [tokenInfo, setTokenInfo] = useState<TokenInfo | null>(null);
 
   useEffect(() => {
     setAuthenticated(!!session);
@@ -73,13 +83,16 @@ export default function UserAvatar() {
   const handleManualSync = async () => {
     try {
       if (!session?.user?.id) return;
-      const USER_ID_KEY = `user-id`;
-      const userId = await getUserId(session.user.id);
-      localStorage.setItem(USER_ID_KEY, userId);
-      setUserId(userId);
+      const info = await getTokenInfo(session.user.id);
+      setTokenInfo(info);
+      setUserId(info.userId);
     } catch (error) {
       toast.error('Sync failed: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
+  };
+
+  const formatTimestamp = (timestamp: number) => {
+    return format(new Date(timestamp * 1000), 'yyyy-MM-dd HH:mm:ss');
   };
 
   const getAvatarRingColor = () => {
@@ -157,21 +170,28 @@ export default function UserAvatar() {
                     <span className="text-sm px-3 py-1 bg-gray-100 text-gray-700 rounded-full flex flex-col flex-grow">
                       <div className="flex items-center gap-1">
                         <TicketIcon className="w-4 h-4 flex-shrink-0 text-center" />
-                        {userId || 'Not synced'}
+                        <span className="truncate" title={tokenInfo?.signature}>
+                          {tokenInfo?.signature ? `${tokenInfo.signature.slice(0,25)}...` : 'Not synced'}
+                        </span>
                       </div>
                     </span>
-                    {!userId && (
-                      <button
-                        onClick={handleManualSync}
-                        className={`p-2 rounded-full hover:bg-gray-100 ${
-                          syncStatus === 'syncing' ? 'animate-spin' : ''
-                        }`}
-                        disabled={syncStatus === 'syncing'}
-                      >
-                        <ArrowPathIcon className={`w-5 h-5 ${getSyncStatusColor()}`} />
-                      </button>
-                    )}
+                    <button
+                      onClick={handleManualSync}
+                      className={`p-2 rounded-full hover:bg-gray-100 ${
+                        syncStatus === 'syncing' ? 'animate-spin' : ''
+                      }`}
+                      disabled={syncStatus === 'syncing'}
+                    >
+                      <ArrowPathIcon className={`w-5 h-5 ${getSyncStatusColor()}`} />
+                    </button>
                   </div>
+                  {tokenInfo && (
+                    <div className="space-y-2 text-sm">
+                      <p>过期时间: {formatTimestamp(tokenInfo.exp)}</p>
+                      <p>生效时间: {formatTimestamp(tokenInfo.nbf)}</p>
+                      {/* <p>发行时间: {formatTimestamp(tokenInfo.iat)}</p> */}
+                    </div>
+                  )}
                   {syncStatus === 'error' && (
                     <p className="text-sm text-red-500">{syncError}</p>
                   )}

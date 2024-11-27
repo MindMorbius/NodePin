@@ -9,7 +9,15 @@ export interface SupabaseSlice {
   syncUserData: () => Promise<void>;
   fetchUserData: (userId: string) => Promise<any>;
   updateUserData: (userId: string, data: any) => Promise<void>;
-  getUserId: (userId: string) => Promise<string>;
+  getTokenInfo: (userId: string) => Promise<TokenInfo>;
+}
+
+interface TokenInfo {
+  userId: string;
+  exp: number;
+  nbf: number;
+  iat: number;
+  signature: string;
 }
 
 export const createSupabaseSlice: StateCreator<
@@ -29,7 +37,7 @@ export const createSupabaseSlice: StateCreator<
       toast.success('同步成功');
       setTimeout(() => {
         set({ syncStatus: 'idle' });
-      }, 3000);
+      }, 10000);
     } catch (error) {
       set({ 
         syncStatus: 'error',
@@ -48,28 +56,37 @@ export const createSupabaseSlice: StateCreator<
     await api.put(`/users/${userId}`, userData);
   },
 
-  getUserId: async (discourseId: string) => {
+  getTokenInfo: async (discourseId: string): Promise<TokenInfo> => {
     try {
       set({ syncStatus: 'syncing', syncError: null });
-      toast.info('正在获取 UUID...');
+      toast.info('正在获取 access token...');
       
-      const { data } = await api.get<{ id: string }>('/getUserId', {
-        params: { discourseId }
+      const { data } = await api.get<{ accessToken: string }>('/auth/session', {
+
       });
       
+      const [header, payload, signature] = data.accessToken.split('.');
+      const decodedPayload = JSON.parse(atob(payload));
+      
       set({ syncStatus: 'success' });
-      toast.success('获取 UUID 成功');
+      toast.success('获取 access token 成功');
       setTimeout(() => {
         set({ syncStatus: 'idle' });
       }, 3000);
       
-      return data.id;
+      return {
+        userId: decodedPayload.sub,
+        exp: decodedPayload.exp,
+        nbf: decodedPayload.nbf,
+        iat: decodedPayload.iat,
+        signature
+      };
     } catch (error) {
       set({ 
         syncStatus: 'error',
         syncError: error instanceof Error ? error.message : 'Unknown error'
       });
-      toast.error('获取 UUID 失败: ' + (error instanceof Error ? error.message : '未知错误'));
+      toast.error('获取 access token 失败: ' + (error instanceof Error ? error.message : '未知错误'));
       throw error;
     }
   },
