@@ -41,7 +41,7 @@ export async function POST(req: Request) {
       .eq('discourse_id', session.user.id)
       .single();
 
-    console.log('获取用户UID:', userData?.id);
+    // console.log('获取用户UID:', userData?.id);
 
     // 保存会话信息
     const { error: sessionError } = await supabaseAdmin

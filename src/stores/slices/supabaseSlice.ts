@@ -37,7 +37,7 @@ export const createSupabaseSlice: StateCreator<
       toast.success('同步成功');
       setTimeout(() => {
         set({ syncStatus: 'idle' });
-      }, 10000);
+      }, 15000);
     } catch (error) {
       set({ 
         syncStatus: 'error',

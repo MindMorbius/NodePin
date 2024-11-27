@@ -7,7 +7,6 @@ import NodeDialog from '@/components/NodeDialog';
 import { SubscriptionInfo, Node } from '@/types/clash';
 import { api } from '@/utils/api';
 import { useStore } from '@/stores';
-import UserAvatar from '@/components/UserAvatar';
 
 interface Subscription {
   name: string;
@@ -211,15 +210,6 @@ export default function SubscriptionManagement() {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">订阅管理</h1>
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => router.push('/')}
-            className="px-4 py-2 bg-[var(--card)] hover:bg-[var(--card-hover)] rounded-lg transition-colors"
-          >
-            返回
-          </button>
-          <UserAvatar />
-        </div>
       </div>
 
       <div className="space-y-4">

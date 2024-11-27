@@ -47,7 +47,8 @@ export default {
     language: '语言',
     adminPanel: '管理面板',
     signOut: '退出登录',
-    close: '关闭'
+    close: '关闭',
+    back: '返回'
   },
   login: {
     manage: '管理订阅',

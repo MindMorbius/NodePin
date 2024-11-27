@@ -47,7 +47,8 @@ export default {
     language: '语言',
     adminPanel: '列车调度室',
     signOut: '调度员离开',
-    close: '关闭'
+    close: '关闭',
+    back: '返回'
   },
   login: {
     manage: '进入车站',

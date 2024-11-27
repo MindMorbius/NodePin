@@ -47,7 +47,8 @@ export default {
     language: 'Language',
     adminPanel: 'Admin Panel',
     signOut: 'Sign Out',
-    close: 'Close'
+    close: 'Close',
+    back: 'Back'
   },
   login: {
     manage: 'Manage',
