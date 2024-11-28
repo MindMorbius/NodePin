@@ -74,5 +74,8 @@ export default {
     syncing: '同步中...',
     success: '同步成功',
     error: '同步失败'
+  },
+  error: {
+    pageNotFound: '页面不存在'
   }
 }; 

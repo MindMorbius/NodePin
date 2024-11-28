@@ -74,5 +74,8 @@ export default {
     syncing: 'Syncing...',
     success: 'Sync Success',
     error: 'Sync Error'
+  },
+  error: {
+    pageNotFound: 'Page not found'
   }
 }; 
