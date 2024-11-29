@@ -12,7 +12,10 @@ export default {
     noTrafficInfo: '列车信息缺失',
     nodeError: '无法获取车厢信息',
     subscriptionError: '快车失控，已离开轨道',
-    retry: '呼叫总台'
+    retry: '呼叫总台',
+    created: '发车时间',
+    modified: '改点时间',
+    lastUpdate: '最近联络'
   },
   statusBar: {
     total: '快车总数',

@@ -4,7 +4,6 @@ import { StoreState } from './types';
 import { createAuthSlice } from './slices/authSlice';
 import { createI18nSlice } from './slices/i18nSlice';
 import { createSubscriptionSlice } from './slices/subscriptionSlice';
-import { createSupabaseSlice } from './slices/supabaseSlice';
 import { createSupabasePublicSlice } from './slices/supabasePublicSlice';
 
 export const useStore = create<StoreState>()(
@@ -13,7 +12,6 @@ export const useStore = create<StoreState>()(
       ...createAuthSlice(...a),
       ...createI18nSlice(...a),
       ...createSubscriptionSlice(...a),
-      ...createSupabaseSlice(...a),
       ...createSupabasePublicSlice(...a)
     }),
     {
@@ -32,7 +30,10 @@ export const useAuth = () => {
     isAuthenticated: state.isAuthenticated,
     login: state.login,
     logout: state.logout,
-    checkAuth: state.checkAuth
+    checkAuth: state.checkAuth,
+    syncStatus: state.syncStatus,
+    syncError: state.syncError,
+    syncUserData: state.syncUserData
   }));
 };
 
@@ -55,22 +56,15 @@ export const useSubscription = () => {
   }));
 };
 
-export const useSupabase = () => {
-  return useStore((state) => ({
-    syncStatus: state.syncStatus,
-    syncError: state.syncError,
-    syncUserData: state.syncUserData,
-    fetchUserData: state.fetchUserData,
-    updateUserData: state.updateUserData,
-    getTokenInfo: state.getTokenInfo
-  }));
-};
-
 export const useSupabasePublic = () => {
   return useStore((state) => ({
-    users: state.users,
-    usersLoading: state.usersLoading,
-    usersError: state.usersError,
-    fetchUsers: state.fetchUsers
+    usersPublic: state.usersPublic,
+    usersPublicLoading: state.usersPublicLoading,
+    usersPublicError: state.usersPublicError,
+    fetchUsersPublic: state.fetchUsersPublic,
+    subscriptionsPublic: state.subscriptionsPublic,
+    subscriptionsPublicLoading: state.subscriptionsPublicLoading,
+    subscriptionsPublicError: state.subscriptionsPublicError,
+    fetchSubscriptionsPublic: state.fetchSubscriptionsPublic
   }));
 }; 

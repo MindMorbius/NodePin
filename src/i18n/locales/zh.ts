@@ -12,7 +12,10 @@ export default {
     noTrafficInfo: '无流量信息',
     nodeError: '无法获取节点信息，请检查订阅是否有效或已过期',
     subscriptionError: '无法获取订阅信息，请检查订阅是否有效或已过期',
-    retry: '重试'
+    retry: '重试',
+    created: '创建',
+    modified: '修改',
+    lastUpdate: '更新'
   },
   statusBar: {
     total: '订阅总数',

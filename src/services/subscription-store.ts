@@ -59,7 +59,8 @@ export async function fetchSubscriptionNodes(specificUrls?: string[]) {
         }
 
         const filteredNodes = data.nodes.filter(node => {
-          const invalidKeywords = ['剩余', '过期', '到期', '流量', 'expire', 'traffic', '官网', '（看这里）', '.ink', '套餐', '网址', '链接', '订阅', '更新', 't.me', '.com', '邀请', '返利', '新用户'];
+          // const invalidKeywords = ['剩余', '过期', '到期', '流量', 'expire', 'traffic', '官网', '（看这里）', '.ink', '套餐', '网址', '链接', '订阅', '更新', 't.me', '.com', '邀请', '返利', '新用户'];
+          const invalidKeywords: string[] = [];
           const nameHasInvalidKeyword = invalidKeywords.some(keyword => 
             node.name.toLowerCase().includes(keyword.toLowerCase())
           );

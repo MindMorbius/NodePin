@@ -13,7 +13,8 @@ export async function parseSubscription(url: string): Promise<{
   });
   
   const content = response.data;
-  const userInfo = response.headers.get('subscription-userinfo');
+  const userInfo = response.headers['subscription-userinfo'];
+  console.log('[CLASH] UserInfo:', userInfo);
   
   // 解析订阅信息从 header
   let uploadBytes = 0, downloadBytes = 0, totalBytes = 0, expire = 0;

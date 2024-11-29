@@ -12,7 +12,10 @@ export default {
     noTrafficInfo: 'No traffic info',
     nodeError: 'Unable to get node information, please check if the subscription is valid or expired',
     retry: 'Retry',
-    subscriptionError: 'Failed to get subscription information, please check if the subscription is valid or expired'
+    subscriptionError: 'Failed to get subscription information, please check if the subscription is valid or expired',
+    created: 'Created',
+    modified: 'Modified',
+    lastUpdate: 'Last Update'
   },
   statusBar: {
     total: 'Total Subscriptions',

@@ -4,8 +4,8 @@ import { useTranslation } from 'react-i18next';
 
 interface StatusBarProps {
   subscriptions: Array<{
-    id: number;
-    status: 'loading' | 'show' | 'hide';
+    fetch_status: string | null;
+    data_update_time: string | null;
   }>;
   loading?: boolean;
   onRefresh?: () => void;
@@ -15,9 +15,15 @@ export default function StatusBar({ subscriptions, loading, onRefresh }: StatusB
   const { t } = useTranslation();
   
   const total = subscriptions.length;
-  const loading_count = subscriptions.filter(s => s.status === 'loading').length;
-  const success_count = subscriptions.filter(s => s.status === 'show').length;
-  const failed_count = subscriptions.filter(s => s.status === 'hide').length;
+  const loading_count = subscriptions.filter(s => s.fetch_status === 'loading').length;
+  const success_count = subscriptions.filter(s => s.fetch_status === 'success').length;
+  const failed_count = subscriptions.filter(s => s.fetch_status === 'failed').length;
+  
+  const lastUpdate = subscriptions
+    .map(s => s.data_update_time)
+    .filter(Boolean)
+    .sort()
+    .reverse()[0];
 
   if (total === 0) return null;
 
