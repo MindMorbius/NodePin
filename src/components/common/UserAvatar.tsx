@@ -27,7 +27,7 @@ export default function UserAvatar() {
   const router = useRouter();
   const { data: session } = useSession();
   const { t } = useTranslation();
-  const { setAuthenticated, syncUserData, syncStatus, syncError, getTokenInfo } = useStore();
+  const { setAuthenticated, syncUserData, syncStatus, syncError, getTokenInfo, setLoginDialogOpen } = useStore();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [userId, setUserId] = useState<string | null>(() => {
@@ -58,7 +58,7 @@ export default function UserAvatar() {
     if (session) {
       setIsProfileOpen(true);
     } else {
-      setIsLoginOpen(true);
+      setLoginDialogOpen(true);
     }
   };
 
@@ -252,10 +252,7 @@ export default function UserAvatar() {
         </div>
       </Dialog>
 
-      <LoginDialog 
-        isOpen={isLoginOpen}
-        onClose={() => setIsLoginOpen(false)}
-      />
+      <LoginDialog />
     </>
   );
 }

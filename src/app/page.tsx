@@ -3,10 +3,10 @@
 import { useEffect } from 'react';
 import { useStore } from '@/stores';
 import { useTranslation } from 'react-i18next';
-import StatusBar from '@/components/StatusBar';
+import StatusBar from '@/components/page/StatusBar';
 import Link from 'next/link';
-import UserCard from '@/components/UserCard';
-import SubscriptionPublicCard from '@/components/SubscriptionPublicCard';
+import UserCard from '@/components/page/UserCard';
+import SubscriptionPublicCard from '@/components/page/SubscriptionPublicCard';
 
 export default function Home() {
   const { t } = useTranslation();

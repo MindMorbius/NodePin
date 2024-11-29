@@ -14,6 +14,8 @@ export interface AuthSlice {
   syncError: string | null;
   syncUserData: () => Promise<void>;
   getTokenInfo: (userId: string) => Promise<TokenInfo>;
+  isLoginDialogOpen: boolean;
+  setLoginDialogOpen: (open: boolean) => void;
 }
 
 interface TokenInfo {
@@ -33,6 +35,7 @@ export const createAuthSlice: StateCreator<
   isAuthenticated: false,
   syncStatus: 'idle',
   syncError: null,
+  isLoginDialogOpen: false,
 
   syncUserData: async () => {
     try {
@@ -56,6 +59,8 @@ export const createAuthSlice: StateCreator<
     set({ isAuthenticated: status });
   },
 
+  setLoginDialogOpen: (open) => set({ isLoginDialogOpen: open }),
+
   login: async () => {
     try {
       const result = await signIn('linuxdo', { redirect: false });
@@ -77,10 +82,9 @@ export const createAuthSlice: StateCreator<
     try {
       const session = await getSession();
       if (!session?.user) {
-        set({ isAuthenticated: false });
+        set({ isAuthenticated: false, isLoginDialogOpen: true });
         await signOut({ redirect: false });
         toast.error('登录已过期，请重新登录');
-        await signIn('linuxdo', { redirect: false });
         return false;
       }
 
@@ -99,18 +103,17 @@ export const createAuthSlice: StateCreator<
       set({ isAuthenticated: isAuth });
       
       if (!isAuth) {
+        set({ isAuthenticated: false, isLoginDialogOpen: true });
         await signOut({ redirect: false });
         toast.error('登录已过期，请重新登录');
-        await signIn('linuxdo', { redirect: false });
       }
       
       return isAuth;
     } catch (error) {
       console.error('Auth check failed:', error);
-      set({ isAuthenticated: false });
+      set({ isAuthenticated: false, isLoginDialogOpen: true });
       await signOut({ redirect: false });
       toast.error('验证失败，请重新登录');
-      await signIn('linuxdo', { redirect: false });
       return false;
     }
   },
@@ -149,6 +152,4 @@ export const createAuthSlice: StateCreator<
       throw error;
     }
   },
-
-
 }); 

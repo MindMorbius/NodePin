@@ -6,24 +6,19 @@ import { useTranslation } from 'react-i18next';
 import { CommandLineIcon } from '@heroicons/react/24/solid';
 import { useStore } from '@/stores';
 
-interface LoginDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-export default function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
+export default function LoginDialog() {
   const { t } = useTranslation();
-  const { login } = useStore();
+  const { login, isLoginDialogOpen, setLoginDialogOpen } = useStore();
 
   const handleLogin = async () => {
     await login();
-    onClose();
+    setLoginDialogOpen(false);
   };
 
   return (
     <Dialog 
-      open={isOpen} 
-      onClose={onClose}
+      open={isLoginDialogOpen} 
+      onClose={() => setLoginDialogOpen(false)}
       className="relative z-50"
     >
       <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
@@ -43,7 +38,7 @@ export default function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
 
           <div className="mt-4 flex justify-end">
             <button
-              onClick={onClose}
+              onClick={() => setLoginDialogOpen(false)}
               className="px-4 py-2 bg-[var(--card)] hover:bg-[var(--card-hover)] rounded-lg transition-colors"
             >
               {t('login.cancel')}
