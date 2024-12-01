@@ -27,7 +27,7 @@ export default function UserAvatar() {
   const router = useRouter();
   const { data: session } = useSession();
   const { t } = useTranslation();
-  const { setAuthenticated, syncUserData, syncStatus, syncError, getTokenInfo, setLoginDialogOpen } = useStore();
+  const { setAuthenticated, syncUserData, syncStatus, syncError, getTokenInfo, setLoginDialogOpen, checkSession } = useStore();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [userId, setUserId] = useState<string | null>(() => {

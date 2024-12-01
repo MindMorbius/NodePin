@@ -33,7 +33,8 @@ export const useAuth = () => {
     checkAuth: state.checkAuth,
     syncStatus: state.syncStatus,
     syncError: state.syncError,
-    syncUserData: state.syncUserData
+    syncUserData: state.syncUserData,
+    checkSession: state.checkSession
   }));
 };
 
@@ -65,6 +66,8 @@ export const useSupabasePublic = () => {
     subscriptionsPublic: state.subscriptionsPublic,
     subscriptionsPublicLoading: state.subscriptionsPublicLoading,
     subscriptionsPublicError: state.subscriptionsPublicError,
-    fetchSubscriptionsPublic: state.fetchSubscriptionsPublic
+    fetchSubscriptionsPublic: state.fetchSubscriptionsPublic,
+    serverTime: state.serverTime,
+    fetchServerTime: state.fetchServerTime
   }));
 }; 

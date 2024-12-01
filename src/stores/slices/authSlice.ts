@@ -16,6 +16,7 @@ export interface AuthSlice {
   getTokenInfo: (userId: string) => Promise<TokenInfo>;
   isLoginDialogOpen: boolean;
   setLoginDialogOpen: (open: boolean) => void;
+  checkSession: () => Promise<SessionInfo>;
 }
 
 interface TokenInfo {
@@ -24,6 +25,11 @@ interface TokenInfo {
   nbf: number;
   iat: number;
   signature: string;
+}
+
+interface SessionInfo {
+  serverTime: number;
+  expiresAt: number;
 }
 
 export const createAuthSlice: StateCreator<
@@ -149,6 +155,39 @@ export const createAuthSlice: StateCreator<
         syncError: error instanceof Error ? error.message : 'Unknown error'
       });
       toast.error('获取 access token 失败: ' + (error instanceof Error ? error.message : '未知错误'));
+      throw error;
+    }
+  },
+
+  checkSession: async (): Promise<SessionInfo> => {
+    try {
+      set({ syncStatus: 'syncing', syncError: null });
+      toast.info('正在检查会话状态...');
+      
+      const [timeResponse, sessionResponse] = await Promise.all([
+        api.get<{ time: number }>('/public/time'),
+        api.get<{ accessToken: string }>('/auth/session')
+      ]);
+      
+      const [, payload] = sessionResponse.data.accessToken.split('.');
+      const decodedPayload = JSON.parse(atob(payload));
+      
+      set({ syncStatus: 'success' });
+      toast.success('会话状态正常');
+      setTimeout(() => {
+        set({ syncStatus: 'idle' });
+      }, 3000);
+
+      return {
+        serverTime: timeResponse.data.time,
+        expiresAt: decodedPayload.exp * 1000 // 转换为毫秒
+      };
+    } catch (error) {
+      set({ 
+        syncStatus: 'error',
+        syncError: error instanceof Error ? error.message : 'Unknown error'
+      });
+      toast.error('会话检查失败: ' + (error instanceof Error ? error.message : '未知错误'));
       throw error;
     }
   },

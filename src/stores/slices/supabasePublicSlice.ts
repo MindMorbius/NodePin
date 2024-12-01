@@ -32,6 +32,8 @@ export interface SupabasePublicSlice {
   subscriptionsPublicLoading: boolean;
   subscriptionsPublicError: string | null;
   fetchSubscriptionsPublic: () => Promise<void>;
+  serverTime: number | null;
+  fetchServerTime: () => Promise<void>;
 }
 
 export const createSupabasePublicSlice: StateCreator<
@@ -73,6 +75,13 @@ export const createSupabasePublicSlice: StateCreator<
         subscriptionsPublicLoading: false 
       });
     }
+  },
+
+  serverTime: null,
+  
+  fetchServerTime: async () => {
+    const { data } = await api.get<{ time: number }>('/public/time');
+    set({ serverTime: data.time });
   },
 
 }); 

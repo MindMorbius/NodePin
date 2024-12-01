@@ -7,6 +7,7 @@ import UserAvatar from './UserAvatar';
 import { Cog6ToothIcon } from '@heroicons/react/24/solid';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useStore } from '@/stores';
+import SessionTimer from './SessionTimer';
 
 export default function Navbar() {
   const { t } = useTranslation();
@@ -29,6 +30,9 @@ export default function Navbar() {
               NodePin
             </Link>
           </div>
+
+          {/* 中间区域: 会话计时器 */}
+          <SessionTimer />
 
           {/* 右侧区域: 管理面板按钮和头像 */}
           <div className="flex-shrink-0 flex items-center gap-4">
