@@ -1,283 +1,291 @@
 import { useState } from 'react';
-import { ChevronDownIcon, ChevronUpIcon, KeyIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { ChevronDownIcon, ChevronUpIcon, ArrowPathIcon, PencilIcon, XMarkIcon, CheckIcon, ListBulletIcon, CloudArrowUpIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import { api } from '@/utils/api';
 import { toast } from 'sonner';
-
-interface Token {
-  id: string;
-  name: string;
-  code: string;
-  expires_at: string | null;
-  max_uses: number | null;
-  min_trust_level: number;
-  usage_period_days: number | null;
-  created_at: string;
-  used_count: number;
-}
+import { db } from '@/utils/db';
+import NodeDialog from './NodeDialog';
+import { Node } from '@/types/clash';
+import { useStore } from '@/stores';
+import AddSubscriptionDialog from './AddSubscriptionDialog';
+import { SubscriptionInfo } from '@/types/clash';
+import { format, formatDistanceToNow } from 'date-fns';
+import { zhCN } from 'date-fns/locale';
 
 interface SubscriptionCardProps {
   subscription: {
     id: string;
     name: string;
-    encrypted_url: string;
+    url: string;
+    upload_traffic?: number;
+    download_traffic?: number;
+    total_traffic?: number;
+    node_count?: number;
+    expire_time?: number;
+    sync_status?: 'pending' | 'synced' | 'failed';
     created_at: string;
-    tokens: Token[];
-    users: {
-      id: string;
-      name: string;
-      trust_level: number;
-      imported_at: string;
-    }[];
+    updated_at: string;
   };
   onUpdate: () => void;
 }
 
 export default function SubscriptionCard({ subscription, onUpdate }: SubscriptionCardProps) {
   const [expanded, setExpanded] = useState(false);
-  const [showTokenDialog, setShowTokenDialog] = useState(false);
-  const [newToken, setNewToken] = useState({
-    name: '',
-    expires_at: '', // YYYY-MM-DD
-    max_uses: '',
-    min_trust_level: '1',
-    usage_period_days: ''
-  });
+  const [checking, setChecking] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [showNodes, setShowNodes] = useState(false);
+  const [nodes, setNodes] = useState<Node[]>([]);
+  const [nodeError, setNodeError] = useState<string>();
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const { checkSubscriptions } = useStore();
+  const [showUrl, setShowUrl] = useState(false);
 
-  const handleCreateToken = async () => {
-    if (!newToken.name || !newToken.min_trust_level) {
-      toast.error('请填写必填项');
-      return;
-    }
+  const formatBytes = (bytes?: number) => {
+    if (!bytes) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
 
+  const formatExpireDate = (timestamp?: number) => {
+    if (!timestamp) return '永久';
+    const date = new Date(timestamp * 1000);
+    return `${format(date, 'yyyy-MM-dd', { locale: zhCN })} (${formatDistanceToNow(date, { 
+      locale: zhCN,
+      addSuffix: true 
+    })})`;
+  };
+
+  const handleCheck = async () => {
     try {
-      const response = await api.post<{success: boolean; data: Token}>(
-        `/admin/subscriptions/${subscription.id}/tokens`,
-        {
-          ...newToken,
-          max_uses: newToken.max_uses ? parseInt(newToken.max_uses) : null,
-          usage_period_days: newToken.usage_period_days ? parseInt(newToken.usage_period_days) : null
-        }
-      );
+      setChecking(true);
+      const response = await checkSubscriptions(subscription.url);
 
-      if (response.data.success) {
-        toast.success('创建令牌成功');
-        setShowTokenDialog(false);
-        setNewToken({
-          name: '',
-          expires_at: '',
-          max_uses: '',
-          min_trust_level: '1',
-          usage_period_days: ''
-        });
-        onUpdate();
-      }
+      await db.updateSubscription(subscription.id, {
+        upload_traffic: response.info.upload,
+        download_traffic: response.info.download,
+        total_traffic: response.info.total,
+        node_count: response.nodes.length,
+        expire_time: response.info.expire,
+        data_update_time: new Date().toISOString(),
+        fetch_status: 'success',
+        nodes: response.nodes.map(node => ({
+          name: node.name,
+          type: node.type
+        }))
+      });
+
+      onUpdate();
+      toast.success('订阅信息更新成功');
     } catch (error) {
-      toast.error('创建令牌失败');
+      toast.error(error.message);
+      await db.updateSubscription(subscription.id, {
+        fetch_status: 'failed',
+        data_update_time: new Date().toISOString()
+      });
+    } finally {
+      setChecking(false);
     }
   };
 
-  const handleRevokeToken = async (tokenId: string) => {
+  const handleSubmit = async (data: { 
+    name: string; 
+    url: string; 
+    info?: SubscriptionInfo;
+    nodes?: Node[];
+  }) => {
     try {
-      const response = await api.delete(`/admin/subscriptions/${subscription.id}/tokens/${tokenId}`);
-      if (response.data.success) {
-        toast.success('撤销令牌成功');
-        onUpdate();
+      await db.updateSubscription(subscription.id, {
+        name: data.name,
+        url: data.url,
+        upload_traffic: data.info?.upload || subscription.upload_traffic,
+        download_traffic: data.info?.download || subscription.download_traffic,
+        total_traffic: data.info?.total || subscription.total_traffic,
+        node_count: data.nodes?.length || subscription.node_count,
+        expire_time: data.info?.expire || subscription.expire_time,
+        data_update_time: new Date().toISOString(),
+        fetch_status: 'success',
+        nodes: data.nodes?.map(node => ({
+          name: node.name,
+          type: node.type
+        })) || subscription.nodes,
+        sync_status: 'pending'
+      });
+      
+      setShowAddDialog(false);
+      onUpdate();
+      toast.success('更新成功');
+    } catch (error) {
+      toast.error('更新失败');
+    }
+  };
+
+  const handleShowNodes = async () => {
+    try {
+      setNodeError(undefined);
+      const cached = await db.getSubscription(subscription.id);
+      if (cached?.nodes && cached.nodes.length > 0) {
+        setNodes(cached.nodes);
+        setShowNodes(true);
+      } else {
+        toast.info('请先检查订阅以获取节点信息');
       }
     } catch (error) {
-      toast.error('撤销令牌失败');
+      setNodeError('获取节点列表失败');
+      setShowNodes(true);
+    }
+  };
+
+  const handleSync = async () => {
+    try {
+      // setSyncing(true);
+      toast.success('同步未实现');
+      // await db.updateSubscription(subscription.id, {
+      //   sync_status: 'synced'
+      // });
+      onUpdate();
+    } catch (error) {
+      toast.error('同步失败');
+    } finally {
+      setSyncing(false);
     }
   };
 
   return (
-    <div className="bg-[var(--card)] rounded-lg shadow-sm overflow-hidden">
-      <div 
-        className="p-4 flex justify-between items-center cursor-pointer"
-        onClick={() => setExpanded(!expanded)}
-      >
-        <div className="space-y-1">
-          <h3 className="font-medium">{subscription.name}</h3>
-          <div className="text-sm text-gray-500">
-            创建于: {new Date(subscription.created_at).toLocaleString('zh-CN')}
-          </div>
-        </div>
-        {expanded ? (
-          <ChevronUpIcon className="w-5 h-5" />
-        ) : (
-          <ChevronDownIcon className="w-5 h-5" />
-        )}
-      </div>
-
-      {expanded && (
-        <div className="border-t border-gray-100 p-4 space-y-4">
-          {/* 订阅信息 */}
-          <div className="space-y-2">
-            <div className="text-sm font-medium">加密后的订阅地址</div>
-            <div className="text-sm bg-gray-50 p-2 rounded font-mono break-all">
-              {subscription.encrypted_url}
+    <>
+      <div className="bg-[var(--card)] rounded-lg shadow-sm overflow-hidden">
+        <div className="p-4 space-y-4">
+          {/* 头部信息 */}
+          <div className="flex justify-between items-start">
+            <div className="space-y-1 flex-1">
+              <div className="flex items-center gap-2 max-w-[1000px]">
+                <h3 className="font-medium truncate">{subscription.name}</h3>
+              </div>
+              <div className="text-sm text-gray-500">
+                创建于: {formatDistanceToNow(new Date(subscription.created_at), { 
+                  locale: zhCN,
+                  addSuffix: true 
+                })} 更新于: {formatDistanceToNow(new Date(subscription.updated_at), { 
+                  locale: zhCN,
+                  addSuffix: true 
+                })}
+              </div>
+              <div className="text-sm text-gray-500 flex items-center gap-1.5">
+                <span className="cursor-pointer flex items-center gap-1" onClick={() => setShowUrl(!showUrl)}>
+                  {showUrl ? <EyeSlashIcon className="w-4 h-4" /> : <EyeIcon className="w-4 h-4" />}
+                  订阅地址({showUrl ? '点击隐藏' : '点击显示'}): 
+                </span>
+                {showUrl && <span className="font-mono break-all">{subscription.url}</span>}
+              </div>
             </div>
-          </div>
-
-          {/* 令牌管理 */}
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <div className="text-sm font-medium">令牌管理</div>
+            <div className="flex gap-2">
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowTokenDialog(true);
-                }}
-                className="px-3 py-1.5 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white rounded-lg text-sm flex items-center gap-1.5"
+                onClick={() => setShowAddDialog(true)}
+                className="px-3 py-1.5 bg-[var(--card)] hover:bg-[var(--card-hover)] rounded-lg transition-colors flex items-center gap-1.5"
               >
-                <KeyIcon className="w-4 h-4" />
-                生成令牌
+                <PencilIcon className="w-4 h-4" />
+                编辑
+              </button>
+              <button
+                onClick={handleCheck}
+                disabled={checking}
+                className="px-3 py-1.5 bg-[var(--card)] hover:bg-[var(--card-hover)] rounded-lg transition-colors flex items-center gap-1.5"
+              >
+                <ArrowPathIcon className={`w-4 h-4 ${checking ? 'animate-spin' : ''}`} />
+                检查订阅
               </button>
             </div>
+          </div>
 
-            <div className="grid gap-2">
-              {subscription.tokens.map(token => (
-                <div 
-                  key={token.id}
-                  className="bg-gray-50 p-3 rounded-lg space-y-2"
+          {/* 订阅信息 */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 bg-[var(--card-hover)] rounded-lg p-4">
+            <div>
+              <div className="text-sm text-gray-500">总流量</div>
+              <div className="font-medium">{formatBytes(subscription.total_traffic)}</div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-500">已用流量</div>
+              <div className="font-medium">
+                {formatBytes(subscription.upload_traffic + (subscription.download_traffic || 0))}
+              </div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-500">过期时间</div>
+              <div className="font-medium">{formatExpireDate(subscription.expire_time)}</div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-500">节点数量</div>
+              <div
+                className="font-medium cursor-pointer text-blue-500 hover:text-blue-600 flex items-center gap-1"
+                onClick={handleShowNodes}
+              >
+                {subscription.node_count || 0}
+                <span className="text-xs text-gray-500">(点击查看)</span>
+              </div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-500">同步状态</div>
+              <div className="font-medium flex items-center gap-2">
+                {subscription.sync_status === 'pending' ? (
+                  <span className="text-yellow-600">待同步</span>
+                ) : (
+                  <span className="text-green-600">已同步</span>
+                )}
+                <button
+                  onClick={handleSync}
+                  disabled={syncing || subscription.sync_status === 'synced'}
+                  className="text-sm px-2 py-0.5 bg-[var(--card)] hover:bg-[var(--card-hover)] rounded-lg transition-colors flex items-center gap-1 disabled:opacity-50"
                 >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="font-medium">{token.name}</div>
-                      <div className="text-sm font-mono mt-1">{token.code}</div>
-                    </div>
-                    <button
-                      onClick={() => handleRevokeToken(token.id)}
-                      className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      <TrashIcon className="w-4 h-4" />
-                    </button>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-2 text-sm text-gray-500">
-                    <div>使用次数: {token.used_count}/{token.max_uses || '∞'}</div>
-                    <div>最低信任等级: {token.min_trust_level}</div>
-                    {token.expires_at && (
-                      <div>过期时间: {new Date(token.expires_at).toLocaleDateString()}</div>
-                    )}
-                    {token.usage_period_days && (
-                      <div>使用期限: {token.usage_period_days}天</div>
-                    )}
-                  </div>
-                </div>
-              ))}
-
-              {subscription.tokens.length === 0 && (
-                <div className="text-sm text-gray-500 text-center py-2">
-                  暂无令牌
-                </div>
-              )}
+                  <CloudArrowUpIcon className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} />
+                  {subscription.sync_status === 'synced' ? '已同步' : '同步'}
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* 使用者列表 */}
-          <div className="space-y-2">
-            <div className="text-sm font-medium">使用者列表</div>
-            {subscription.users.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {subscription.users.map(user => (
-                  <div key={user.id} className="text-sm bg-gray-50 p-2 rounded flex justify-between items-center">
-                    <span>{user.name}</span>
-                    <span className="text-xs text-gray-500">
-                      导入于 {new Date(user.imported_at).toLocaleString('zh-CN')}
-                    </span>
-                  </div>
-                ))}
-              </div>
+          {/* 展开/收起内容 */}
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="w-full flex items-center justify-center gap-1 text-sm text-gray-500 hover:text-gray-700"
+          >
+            {expanded ? (
+              <>
+                <ChevronUpIcon className="w-4 h-4" />
+                收起详情
+              </>
             ) : (
-              <div className="text-sm text-gray-500">暂无使用者</div>
+              <>
+                <ChevronDownIcon className="w-4 h-4" />
+                查看详情
+              </>
             )}
-          </div>
-        </div>
-      )}
+          </button>
 
-      {/* 生成令牌对话框 */}
-      {showTokenDialog && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50" onClick={() => setShowTokenDialog(false)}>
-          <div className="bg-[var(--card)] rounded-xl p-6 w-full max-w-lg" onClick={e => e.stopPropagation()}>
-            <h3 className="text-lg font-bold mb-4">生成访问令牌</h3>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">令牌名称 *</label>
-                <input
-                  type="text"
-                  value={newToken.name}
-                  onChange={e => setNewToken(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full p-2 border rounded"
-                  placeholder="为令牌起个名字"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">过期时间</label>
-                <input
-                  type="date"
-                  value={newToken.expires_at}
-                  onChange={e => setNewToken(prev => ({ ...prev, expires_at: e.target.value }))}
-                  className="w-full p-2 border rounded"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">最大使用次数</label>
-                <input
-                  type="number"
-                  value={newToken.max_uses}
-                  onChange={e => setNewToken(prev => ({ ...prev, max_uses: e.target.value }))}
-                  className="w-full p-2 border rounded"
-                  placeholder="留空表示不限制"
-                  min="1"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">最低信任等级 *</label>
-                <select
-                  value={newToken.min_trust_level}
-                  onChange={e => setNewToken(prev => ({ ...prev, min_trust_level: e.target.value }))}
-                  className="w-full p-2 border rounded"
-                >
-                  <option value="1">Level 1</option>
-                  <option value="2">Level 2</option>
-                  <option value="3">Level 3</option>
-                  <option value="4">Level 4</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">使用期限(天)</label>
-                <input
-                  type="number"
-                  value={newToken.usage_period_days}
-                  onChange={e => setNewToken(prev => ({ ...prev, usage_period_days: e.target.value }))}
-                  className="w-full p-2 border rounded"
-                  placeholder="留空表示永久有效"
-                  min="1"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 mt-6">
-                <button
-                  onClick={() => setShowTokenDialog(false)}
-                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                >
-                  取消
-                </button>
-                <button
-                  onClick={handleCreateToken}
-                  className="px-4 py-2 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white rounded-lg transition-colors"
-                >
-                  生成
-                </button>
-              </div>
+          {expanded && (
+            <div className="space-y-2 pt-2 border-t border-gray-100">
+              待实现
             </div>
-          </div>
+          )}
         </div>
-      )}
-    </div>
+      </div>
+
+      <NodeDialog
+        isOpen={showNodes}
+        onClose={() => setShowNodes(false)}
+        nodes={nodes}
+        error={nodeError}
+      />
+
+      <AddSubscriptionDialog
+        isOpen={showAddDialog}
+        onClose={() => setShowAddDialog(false)}
+        onSubmit={handleSubmit}
+        initialData={{
+          name: subscription.name,
+          url: subscription.url
+        }}
+        title="编辑订阅"
+      />
+    </>
   );
 } 

@@ -26,6 +26,7 @@ export interface SubscriptionSlice {
   fetchSingleSubscription: (sub: Subscription) => Promise<void>;
   updateSubscription: (id: number, data: Partial<Subscription>) => void;
   clearSubscriptions: () => void;
+  checkSubscriptions: (url: string) => Promise<{ info: SubscriptionInfo; nodes: Node[] }>;
 }
 
 export const createSubscriptionSlice: StateCreator<
@@ -112,5 +113,17 @@ export const createSubscriptionSlice: StateCreator<
 
   clearSubscriptions: () => {
     set({ subscriptions: [], initialized: false });
+  },
+
+  checkSubscriptions: async (url: string) => {
+    try {
+      const response = await api.post<{ error?: string; info: SubscriptionInfo; nodes: Node[] }>('/check/subscriptions', { url });
+      if (response.data.error) {
+        throw new Error(response.data.error);
+      }
+      return response.data;
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : '订阅检查失败');
+    }
   }
 }); 
