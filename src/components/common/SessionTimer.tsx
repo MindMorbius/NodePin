@@ -22,18 +22,11 @@ export default function SessionTimer() {
         setExpiresAt(expiresAt);
         setCurrentTime(serverTime);
       } catch (e) {
-        console.error('Failed to check session:', e);
-        const localServerTime = localStorage.getItem('sessionServerTime');
-        const localExpiresAt = localStorage.getItem('sessionExpiresAt');
-        
-        if (localServerTime && localExpiresAt) {
-          const now = Date.now();
-          const timeDiff = now - parseInt(localServerTime);
-          const currentServerTime = parseInt(localServerTime) + timeDiff;
-          
-          setExpiresAt(parseInt(localExpiresAt));
-          setCurrentTime(currentServerTime);
-        }
+        setTimeLeft('无有效会话，请登录');
+        setExpiresAt(null);
+        setCurrentTime(null);
+        localStorage.removeItem('sessionServerTime');
+        localStorage.removeItem('sessionExpiresAt');
       }
     };
     initSession();

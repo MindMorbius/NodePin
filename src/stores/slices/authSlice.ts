@@ -187,7 +187,7 @@ export const createAuthSlice: StateCreator<
         syncStatus: 'error',
         syncError: error instanceof Error ? error.message : 'Unknown error'
       });
-      toast.error('会话检查失败: ' + (error instanceof Error ? error.message : '未知错误'));
+      // toast.error('会话检查失败: ' + (error instanceof Error ? error.message : '未知错误'));
       throw error;
     }
   },
