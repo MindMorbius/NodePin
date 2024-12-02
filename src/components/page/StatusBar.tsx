@@ -25,6 +25,22 @@ export default function StatusBar({ subscriptions, loading, onRefresh }: StatusB
     .sort()
     .reverse()[0];
 
+  if (loading) {
+    return (
+      <div className="mb-6 p-4 bg-[var(--card)] rounded-xl ring-1 ring-black/5">
+        <div className="flex items-center space-x-4">
+          <div className="h-4 w-24 bg-[var(--card-hover)] animate-pulse rounded" />
+          <div className="h-4 w-16 bg-[var(--card-hover)] animate-pulse rounded" />
+          <div className="h-4 w-20 bg-[var(--card-hover)] animate-pulse rounded" />
+        </div>
+        {/* 进度条骨架 */}
+        <div className="mt-3 h-1 bg-[var(--card-hover)] rounded-full overflow-hidden">
+          <div className="h-full w-2/3 bg-[var(--card-hover)] animate-pulse" />
+        </div>
+      </div>
+    );
+  }
+
   if (total === 0) return null;
 
   return (

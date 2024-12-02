@@ -55,34 +55,45 @@ export default function Home() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {subscriptionsPublic
-          .filter(sub => sub.fetch_status !== 'failed')
-          .map((sub) => (
-            <SubscriptionPublicCard 
-              key={sub.id}
-              sub={{
-                id: sub.id,
-                name: sub.name || '',
-                info: {
-                  total: sub.total_traffic || 0,
-                  upload: sub.upload_traffic || 0, 
-                  download: sub.download_traffic || 0,
-                  expire: sub.expire_time ? new Date(sub.expire_time).getTime() : 0  // 删除 /1000
-                },
-                nodeCount: sub.node_count || 0,
-                loading: sub.fetch_status === 'loading',
-                status: sub.fetch_status as 'loading' | 'show' | 'hide',
-                error: sub.fetch_status === 'failed',
-                dataUpdateTime: sub.data_update_time,
-                updatedAt: sub.updated_at,
-                createdAt: sub.created_at
-              }}
-              loading={sub.fetch_status === 'loading'}
+      {subscriptionsPublicLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 1 }).map((_, i) => (
+            <div 
+              key={`skeleton-${i}`}
+              className="h-[200px] animate-pulse bg-[var(--card)] rounded-xl ring-1 ring-black/5" 
             />
           ))}
-      </div>
-      
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {subscriptionsPublic
+            .filter(sub => sub.fetch_status !== 'failed')
+            .map((sub) => (
+              <SubscriptionPublicCard 
+                key={sub.id}
+                sub={{
+                  id: sub.id,
+                  name: sub.name || '',
+                  info: {
+                    total: sub.total_traffic || 0,
+                    upload: sub.upload_traffic || 0, 
+                    download: sub.download_traffic || 0,
+                    expire: sub.expire_time ? new Date(sub.expire_time).getTime() : 0  // 删除 /1000
+                  },
+                  nodeCount: sub.node_count || 0,
+                  loading: sub.fetch_status === 'loading',
+                  status: sub.fetch_status as 'loading' | 'show' | 'hide',
+                  error: sub.fetch_status === 'failed',
+                  dataUpdateTime: sub.data_update_time,
+                  updatedAt: sub.updated_at,
+                  createdAt: sub.created_at
+                }}
+                loading={sub.fetch_status === 'loading'}
+              />
+            ))}
+        </div>
+      )}
+
       <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent mt-12 mb-6">
         {t('user.users')}
       </h2>
@@ -95,10 +106,10 @@ export default function Home() {
 
       {usersPublicLoading ? (
         <div className="flex overflow-x-auto pb-4">
-          {Array.from({ length: 10 }).map((_, i) => (
+          {Array.from({ length: 1 }).map((_, i) => (
             <div 
               key={`skeleton-${i}`}
-              className="w-[85px] flex-shrink-0 animate-pulse bg-gray-200 h-24 rounded-xl mr-4" 
+              className="w-[85px] flex-shrink-0 animate-pulse bg-[var(--card)] h-24 rounded-xl ring-1 ring-black/5 mr-4" 
             />
           ))}
         </div>
