@@ -67,7 +67,6 @@ class DBManager {
     const updatedSub = {
       ...existing,
       ...data,
-      updated_at: new Date().toISOString(),
       sync_status: data.sync_status || 'pending',
       nodes: data.nodes || existing.nodes || []
     };

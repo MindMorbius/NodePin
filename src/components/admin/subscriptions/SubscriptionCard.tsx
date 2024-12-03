@@ -21,6 +21,8 @@ interface SubscriptionCardProps {
     total_traffic?: number;
     node_count?: number;
     expire_time?: number;
+    data_update_time?: string;
+    fetch_status?: 'success' | 'failed';
     sync_status?: 'pending' | 'synced' | 'failed';
     created_at: string;
     updated_at: string;
@@ -104,6 +106,7 @@ export default function SubscriptionCard({ subscription, onUpdate }: Subscriptio
         node_count: data.nodes?.length || subscription.node_count,
         expire_time: data.info?.expire || subscription.expire_time,
         data_update_time: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         fetch_status: 'success',
         nodes: data.nodes?.map(node => ({
           name: node.name,
@@ -161,21 +164,27 @@ export default function SubscriptionCard({ subscription, onUpdate }: Subscriptio
               <div className="flex items-center gap-2 max-w-[1000px]">
                 <h3 className="font-medium truncate">{subscription.name}</h3>
               </div>
-              <div className="text-sm text-gray-500">
-                创建于: {formatDistanceToNow(new Date(subscription.created_at), { 
-                  locale: zhCN,
-                  addSuffix: true 
-                })} 更新于: {formatDistanceToNow(new Date(subscription.updated_at), { 
-                  locale: zhCN,
-                  addSuffix: true 
-                })}
+              <div className="text-sm text-gray-500 flex items-center gap-2">
+                <span>创建于: {formatDistanceToNow(new Date(subscription.created_at), {locale: zhCN, addSuffix: true})}</span>
+                <span>·</span>
+                <span>上次更新: {formatDistanceToNow(new Date(subscription.updated_at), {locale: zhCN, addSuffix: true})}</span>
               </div>
               <div className="text-sm text-gray-500 flex items-center gap-1.5">
                 <span className="cursor-pointer flex items-center gap-1" onClick={() => setShowUrl(!showUrl)}>
                   {showUrl ? <EyeSlashIcon className="w-4 h-4" /> : <EyeIcon className="w-4 h-4" />}
-                  订阅地址({showUrl ? '点击隐藏' : '点击显示'}): 
+                  订阅地址({showUrl ? '点击复制' : '点击显示'}): 
                 </span>
-                {showUrl && <span className="font-mono break-all">{subscription.url}</span>}
+                {showUrl && (
+                  <span 
+                    className="font-mono text-blue-500 hover:text-blue-600 break-all cursor-pointer"
+                    onClick={() => {
+                      navigator.clipboard.writeText(subscription.url);
+                      toast.success('已复制到剪贴板');
+                    }}
+                  >
+                    {subscription.url}
+                  </span>
+                )}
               </div>
             </div>
             <div className="flex gap-2">
@@ -192,7 +201,15 @@ export default function SubscriptionCard({ subscription, onUpdate }: Subscriptio
                 className="px-3 py-1.5 bg-[var(--card)] hover:bg-[var(--card-hover)] rounded-lg transition-colors flex items-center gap-1.5"
               >
                 <ArrowPathIcon className={`w-4 h-4 ${checking ? 'animate-spin' : ''}`} />
-                检查订阅
+                <span>检查订阅</span>
+                {subscription.data_update_time && (
+                  <span className="text-xs text-gray-500">
+                    {formatDistanceToNow(new Date(subscription.data_update_time), {
+                      locale: zhCN,
+                      addSuffix: true
+                    })}
+                  </span>
+                )}
               </button>
             </div>
           </div>
