@@ -13,7 +13,7 @@ export default function Navbar() {
   const { t } = useTranslation();
   const pathname = usePathname();
   const router = useRouter();
-  const { checkAuth } = useStore();
+  const {  } = useStore();
 
   const isAdmin = pathname.startsWith('/admin');
 
@@ -39,14 +39,7 @@ export default function Navbar() {
             {!isAdmin && (
               <Link
                 href="/admin"
-                className="px-4 py-2 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white rounded-lg transition-colors flex items-center gap-2"
-                onClick={async (e) => {
-                  e.preventDefault();
-                  if (await checkAuth()) {
-                    window.location.href = '/admin';
-                  }
-                }}
-              >
+                className="px-4 py-2 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white rounded-lg transition-colors flex items-center gap-2">
                 <Cog6ToothIcon className="w-5 h-5" />
                 {t('common.adminPanel')}
               </Link>

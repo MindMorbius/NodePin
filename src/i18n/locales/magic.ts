@@ -80,5 +80,12 @@ export default {
   },
   error: {
     pageNotFound: '未知区域，请返回车站'
+  },
+  notification: {
+    pleaseLogin: '请先认证调度员',
+    invalidSession: '无效会话，请重新认证', 
+    sessionExpired: '会话已过期，请重新认证',
+    userNotFound: '调度员不存在，请重新认证',
+    authFailed: '认证失败，请重试'
   }
 };

@@ -7,6 +7,7 @@ import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Toaster } from 'sonner';
 import i18n from '@/i18n';
+import NotificationListener from './common/NotificationListener';
 
 export default function Providers({ children }: PropsWithChildren) {
   return (
@@ -15,6 +16,7 @@ export default function Providers({ children }: PropsWithChildren) {
       refetchWhenOffline={false}
     >
       <I18nextProvider i18n={i18n}>
+      <NotificationListener />
         {children}
         <Analytics />
         <SpeedInsights />

@@ -19,19 +19,13 @@ interface Token {
 
 export default function TokenManagement() {
   const router = useRouter();
-  const { checkAuth } = useStore();
+  const {  } = useStore();
   const [tokens, setTokens] = useState<Token[]>([]);
   const [newToken, setNewToken] = useState({ name: '', expiresIn: '30' }); // 默认30天
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    checkAuth().then(isAuth => {
-      if (!isAuth) {
-        router.push('/');
-      } else {
-        fetchTokens();
-      }
-    });
+    fetchTokens();
   }, []);
 
   const fetchTokens = async () => {

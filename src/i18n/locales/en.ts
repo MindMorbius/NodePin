@@ -80,5 +80,12 @@ export default {
   },
   error: {
     pageNotFound: 'Page not found'
+  },
+  notification: {
+    pleaseLogin: 'Please login first',
+    invalidSession: 'Invalid session, please login again', 
+    sessionExpired: 'Session expired, please login again',
+    userNotFound: 'User not found, please login again',
+    authFailed: 'Authentication failed, please try again'
   }
 }; 

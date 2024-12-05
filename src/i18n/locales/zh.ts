@@ -80,5 +80,12 @@ export default {
   },
   error: {
     pageNotFound: '页面不存在'
+  },
+  notification: {
+    pleaseLogin: '请先登录',
+    invalidSession: '无效会话，请重新登录',
+    sessionExpired: '会话已过期，请重新登录',
+    userNotFound: '用户不存在，请重新登录',
+    authFailed: '认证失败，请重试'
   }
 }; 

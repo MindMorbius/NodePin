@@ -17,6 +17,7 @@ export interface AuthSlice {
   isLoginDialogOpen: boolean;
   setLoginDialogOpen: (open: boolean) => void;
   checkSession: () => Promise<SessionInfo>;
+  handleAuthFailure: (message: string) => Promise<void>;
 }
 
 interface TokenInfo {
@@ -190,5 +191,11 @@ export const createAuthSlice: StateCreator<
       // toast.error('会话检查失败: ' + (error instanceof Error ? error.message : '未知错误'));
       throw error;
     }
+  },
+
+  handleAuthFailure: async (message: string) => {
+    await signOut({ redirect: false });
+    set({ isAuthenticated: false, isLoginDialogOpen: true });
+    toast.error(message);
   },
 }); 

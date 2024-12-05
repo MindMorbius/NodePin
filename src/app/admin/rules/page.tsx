@@ -23,19 +23,13 @@ type ActionType = 'include' | 'exclude' | 'group';
 
 export default function RuleManagement() {
   const router = useRouter();
-  const { checkAuth } = useStore();
+  const {  } = useStore();
   const [rules, setRules] = useState<Rule[]>([]);
   const [loading, setLoading] = useState(false);
   const [editingRule, setEditingRule] = useState<Partial<Rule> | null>(null);
 
   useEffect(() => {
-    checkAuth().then(isAuth => {
-      if (!isAuth) {
-        router.push('/');
-      } else {
-        fetchRules();
-      }
-    });
+    fetchRules();
   }, []);
 
   const fetchRules = async () => {

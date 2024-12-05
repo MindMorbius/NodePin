@@ -30,7 +30,7 @@ interface PaginatedResponse<T> {
 }
 
 export default function SubscriptionManagement() {
-  const { checkAuth, logout } = useStore();
+  const { } = useStore();
   const router = useRouter();
   const [subs, setSubs] = useState<Subscription[]>([]);
   const [newSub, setNewSub] = useState({ name: '', url: '' });
@@ -57,13 +57,7 @@ export default function SubscriptionManagement() {
   };
 
   useEffect(() => {
-    checkAuth().then(isAuth => {
-      if (!isAuth) {
-        router.push('/');
-      } else {
-        fetchSubscriptions();
-      }
-    });
+    fetchSubscriptions();
   }, []);
 
   const handleAdd = async (subscription: { 

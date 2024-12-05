@@ -22,13 +22,7 @@ export default function KeysManagement() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    checkAuth().then(isAuth => {
-      if (!isAuth) {
-        router.push('/');
-      } else {
-        fetchKeys();
-      }
-    });
+    fetchKeys();
   }, []);
 
   const fetchKeys = async () => {
