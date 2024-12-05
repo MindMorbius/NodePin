@@ -10,6 +10,7 @@ import AddSubscriptionDialog from './AddSubscriptionDialog';
 import { SubscriptionInfo } from '@/types/clash';
 import { format, formatDistanceToNow } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
+import { decrypt } from '@/utils/crypto';
 
 interface SubscriptionCardProps {
   subscription: {
@@ -26,6 +27,8 @@ interface SubscriptionCardProps {
     sync_status?: 'pending' | 'synced' | 'failed';
     created_at: string;
     updated_at: string;
+    user_subscriptions_id?: string;
+    encrypted_url?: string;
   };
   onUpdate: () => void;
 }
@@ -38,8 +41,9 @@ export default function SubscriptionCard({ subscription, onUpdate }: Subscriptio
   const [nodes, setNodes] = useState<Node[]>([]);
   const [nodeError, setNodeError] = useState<string>();
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const { checkSubscriptions } = useStore();
+  const { checkSubscriptions, syncSubscription, decryptSubscriptionUrl } = useStore();
   const [showUrl, setShowUrl] = useState(false);
+  const [decrypting, setDecrypting] = useState(false);
 
   const formatBytes = (bytes?: number) => {
     if (!bytes) return '0 B';
@@ -141,16 +145,77 @@ export default function SubscriptionCard({ subscription, onUpdate }: Subscriptio
 
   const handleSync = async () => {
     try {
-      // setSyncing(true);
-      toast.success('同步未实现');
-      // await db.updateSubscription(subscription.id, {
-      //   sync_status: 'synced'
-      // });
+      setSyncing(true);
+      const response = await syncSubscription({
+        id: subscription.id,
+        user_subscriptions_id: subscription.user_subscriptions_id,
+        name: subscription.name,
+        url: subscription.url,
+        upload_traffic: subscription.upload_traffic,
+        download_traffic: subscription.download_traffic,
+        total_traffic: subscription.total_traffic,
+        node_count: subscription.node_count,
+        expire_time: subscription.expire_time,
+        data_update_time: subscription.data_update_time,
+        fetch_status: subscription.fetch_status,
+        status: subscription.status,
+        updated_at: subscription.updated_at
+      });
+
+      console.log('Sync response:', response);
+
+      if (response.data.action === 'kept_db_version') {
+        await db.updateSubscription(subscription.id, {
+          ...response.data.data,
+          user_subscriptions_id: response.data.data.id,
+          sync_status: 'synced'
+        });
+        toast.success('已更新为数据库版本');
+      } else if (response.data.action === 'updated_db') {
+        await db.updateSubscription(subscription.id, {
+          user_subscriptions_id: response.data.data.id,
+          sync_status: 'synced',
+          updated_at: new Date().toISOString()
+        });
+        toast.success('同步成功');
+      } else {
+        throw new Error('Unexpected action type');
+      }
+
       onUpdate();
     } catch (error) {
+      console.error('Sync error:', error);
       toast.error('同步失败');
+      await db.updateSubscription(subscription.id, {
+        sync_status: 'failed',
+        updated_at: new Date().toISOString()
+      });
     } finally {
       setSyncing(false);
+    }
+  };
+
+  const handleDecrypt = async () => {
+    try {
+      setDecrypting(true);
+      if (!subscription.encrypted_url) {
+        toast.error('没有加密地址');
+        return;
+      }
+
+      const result = await decryptSubscriptionUrl(subscription.encrypted_url);
+
+      await db.updateSubscription(subscription.id, {
+        url: result.url
+      });
+
+      toast.success('解密成功');
+      onUpdate();
+    } catch (error) {
+      console.error('Decrypt error:', error);
+      toast.error('解密失败');
+    } finally {
+      setDecrypting(false);
     }
   };
 
@@ -170,20 +235,37 @@ export default function SubscriptionCard({ subscription, onUpdate }: Subscriptio
                 <span>上次更新: {formatDistanceToNow(new Date(subscription.updated_at), {locale: zhCN, addSuffix: true})}</span>
               </div>
               <div className="text-sm text-gray-500 flex items-center gap-1.5">
-                <span className="cursor-pointer flex items-center gap-1" onClick={() => setShowUrl(!showUrl)}>
-                  {showUrl ? <EyeSlashIcon className="w-4 h-4" /> : <EyeIcon className="w-4 h-4" />}
-                  订阅地址({showUrl ? '点击复制' : '点击显示'}): 
-                </span>
-                {showUrl && (
-                  <span 
-                    className="font-mono text-blue-500 hover:text-blue-600 break-all cursor-pointer"
-                    onClick={() => {
-                      navigator.clipboard.writeText(subscription.url);
-                      toast.success('已复制到剪贴板');
-                    }}
+                {subscription.url ? (
+                  <>
+                    <span className="cursor-pointer flex items-center gap-1" onClick={() => setShowUrl(!showUrl)}>
+                      {showUrl ? <EyeSlashIcon className="w-4 h-4" /> : <EyeIcon className="w-4 h-4" />}
+                      订阅地址({showUrl ? '点击复制' : '点击显示'}): 
+                    </span>
+                    {showUrl && (
+                      <span 
+                        className="font-mono text-blue-500 hover:text-blue-600 break-all cursor-pointer"
+                        onClick={() => {
+                          navigator.clipboard.writeText(subscription.url);
+                          toast.success('已复制到剪贴板');
+                        }}
+                      >
+                        {subscription.url}
+                      </span>
+                    )}
+                  </>
+                ) : subscription.encrypted_url ? (
+                  <button
+                    onClick={handleDecrypt}
+                    disabled={decrypting}
+                    className="text-blue-500 hover:text-blue-600 flex items-center gap-1"
                   >
-                    {subscription.url}
-                  </span>
+                    <span>{decrypting ? '解密中...' : '加密地址'}</span>
+                    {decrypting && (
+                      <ArrowPathIcon className="w-4 h-4 animate-spin" />
+                    )}
+                  </button>
+                ) : (
+                  <span className="text-gray-400">无地址</span>
                 )}
               </div>
             </div>
@@ -305,4 +387,4 @@ export default function SubscriptionCard({ subscription, onUpdate }: Subscriptio
       />
     </>
   );
-} 
+}

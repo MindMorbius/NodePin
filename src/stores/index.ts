@@ -47,13 +47,7 @@ export const useI18n = () => {
 
 export const useSubscription = () => {
   return useStore((state) => ({
-    subscriptions: state.subscriptions,
-    loading: state.loading,
-    error: state.error,
-    initialized: state.initialized,
-    fetchSubscriptions: state.fetchSubscriptions,
-    updateSubscription: state.updateSubscription,
-    clearSubscriptions: state.clearSubscriptions
+    checkSubscriptions: state.checkSubscriptions
   }));
 };
 

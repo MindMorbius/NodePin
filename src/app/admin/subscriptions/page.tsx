@@ -30,7 +30,7 @@ interface PaginatedResponse<T> {
 }
 
 export default function SubscriptionManagement() {
-  const { } = useStore();
+  const { fetchAllSubscriptions } = useStore();
   const router = useRouter();
   const [subs, setSubs] = useState<Subscription[]>([]);
   const [newSub, setNewSub] = useState({ name: '', url: '' });
@@ -105,16 +105,91 @@ export default function SubscriptionManagement() {
   const handleSync = async () => {
     try {
       setSyncing(true);
-      const pendingSubs = await db.getPendingSyncs();
-      if (pendingSubs.length === 0) {
-        toast.info('没有需要同步的数据');
-        return;
+      const response = await fetchAllSubscriptions();
+      const remoteSubscriptions = response.data.data;
+
+      if (!Array.isArray(remoteSubscriptions)) {
+        throw new Error('Invalid response format');
       }
 
-      // TODO: 实现远程同步逻辑
-      // const response = await api.post('/admin/subscriptions/sync', { subscriptions: pendingSubs });
-      toast.success(`${pendingSubs.length} 条数据等待同步`);
+      // 2. 获取本地数据
+      const localSubscriptions = await db.getSubscriptions();
+      const needsManualSync: string[] = []; // 存储需要手动同步的订阅名称
+
+      // 3. 处理每个远程订阅
+      for (const remoteSub of remoteSubscriptions) {
+        const localSub = localSubscriptions.find(
+          local => local.user_subscriptions_id === remoteSub.id
+        );
+
+        if (localSub) {
+          const remoteDate = new Date(remoteSub.updated_at);
+          const localDate = new Date(localSub.updated_at);
+
+          if (remoteDate > localDate) {
+            // 远程数据更新，更新本地数据
+            await db.updateSubscription(localSub.id, {
+              name: remoteSub.name,
+              encrypted_url: remoteSub.encrypted_url,
+              user_subscriptions_id: remoteSub.id,
+              upload_traffic: remoteSub.upload_traffic,
+              download_traffic: remoteSub.download_traffic,
+              total_traffic: remoteSub.total_traffic,
+              node_count: remoteSub.node_count,
+              expire_time: remoteSub.expire_time,
+              data_update_time: remoteSub.data_update_time,
+              fetch_status: remoteSub.fetch_status,
+              status: remoteSub.status,
+              sync_status: 'synced',
+              updated_at: remoteSub.updated_at
+            });
+          } else if (localDate > remoteDate) {
+            // 本地数据更新，标记为待同步
+            needsManualSync.push(localSub.name);
+            await db.updateSubscription(localSub.id, {
+              sync_status: 'pending'  // 将状态改为待同步
+            });
+          }
+        } else {
+          // 不存在对应的本地数据，创建新数据
+          await db.addSubscription({
+            name: remoteSub.name,
+            encrypted_url: remoteSub.encrypted_url,
+            url: '',
+            user_subscriptions_id: remoteSub.id,
+            upload_traffic: remoteSub.upload_traffic,
+            download_traffic: remoteSub.download_traffic,
+            total_traffic: remoteSub.total_traffic,
+            node_count: remoteSub.node_count,
+            expire_time: remoteSub.expire_time,
+            data_update_time: remoteSub.data_update_time,
+            fetch_status: remoteSub.fetch_status,
+            status: remoteSub.status,
+            sync_status: 'synced',
+            nodes: remoteSub.nodes || []
+          });
+        }
+      }
+
+      // 4. 检查本地是否有未同步的数据
+      const unsyncedSubs = localSubscriptions.filter(
+        local => !local.user_subscriptions_id
+      );
+      if (unsyncedSubs.length > 0) {
+        toast.info(`发现 ${unsyncedSubs.length} 个未同步的本地订阅，请手动同步`);
+      }
+
+      // 显示需要手动同步的订阅
+      if (needsManualSync.length > 0) {
+        toast.info(
+          `以下订阅本地版本更新，需要手动同步：${needsManualSync.join(', ')}`
+        );
+      }
+
+      await fetchSubscriptions(); // 刷新列表
+      toast.success('同步完成');
     } catch (error) {
+      console.error('Sync error:', error);
       toast.error('同步失败');
     } finally {
       setSyncing(false);

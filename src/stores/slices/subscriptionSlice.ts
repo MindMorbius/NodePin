@@ -1,6 +1,7 @@
 import { StateCreator } from 'zustand';
 import { api } from '@/utils/api';
 import { StoreState } from '../types';
+import { Subscription } from '@/utils/db';
 
 interface SubscriptionInfo {
   total: number;
@@ -9,24 +10,30 @@ interface SubscriptionInfo {
   expire: number;
 }
 
-interface Subscription {
-  id: number;
-  name: string;
-  info: SubscriptionInfo;
-  nodeCount: number;
-  status: 'loading' | 'show' | 'hide';
-}
 
 export interface SubscriptionSlice {
-  subscriptions: Subscription[];
-  loading: boolean;
-  error: string | null;
-  initialized: boolean;
-  fetchSubscriptions: () => Promise<void>;
-  fetchSingleSubscription: (sub: Subscription) => Promise<void>;
-  updateSubscription: (id: number, data: Partial<Subscription>) => void;
-  clearSubscriptions: () => void;
+
   checkSubscriptions: (url: string) => Promise<{ info: SubscriptionInfo; nodes: Node[] }>;
+  syncSubscription: (subscription: Subscription) => Promise<{
+    data: {
+      action: 'kept_db_version' | 'updated_db';
+      data: Subscription;
+    }
+  }>;
+  fetchSubscriptions: () => Promise<Subscription[]>;
+  fetchAllSubscriptions: () => Promise<{
+    data: Array<{
+      id: string;
+      name: string;
+      url: string;
+      // ... other fields
+      updated_at: string;
+    }>;
+  }>;
+  decryptSubscriptionUrl: (encrypted_url: string) => Promise<{
+    success: boolean;
+    url: string;
+  }>;
 }
 
 export const createSubscriptionSlice: StateCreator<
@@ -35,85 +42,7 @@ export const createSubscriptionSlice: StateCreator<
   [],
   SubscriptionSlice
 > = (set, get) => ({
-  subscriptions: [],
-  loading: false,
-  error: null,
-  initialized: false,
 
-  fetchSubscriptions: async () => {
-    const state = get();
-    if (state.loading) return;
-    
-    set({ loading: true, error: null });
-    
-    try {
-      const response = await api.get<{
-        success: boolean;
-        data: { items: Subscription[] };
-      }>('/public/subscriptions');
-      
-      if (response.data.success) {
-        const items = response.data.data.items.map(item => ({
-          ...item,
-          status: 'loading' as const
-        }));
-        
-        set({ subscriptions: items });
-        
-        // 处理单个订阅
-        for (const sub of items) {
-          await get().fetchSingleSubscription(sub);
-        }
-      }
-    } catch (error) {
-      set({ error: error instanceof Error ? error.message : '获取订阅失败' });
-    } finally {
-      set({ loading: false, initialized: true });
-    }
-  },
-
-  fetchSingleSubscription: async (sub) => {
-    try {
-      const response = await api.post<{
-        success: boolean;
-        data: {
-          info: SubscriptionInfo;
-          nodeCount: number;
-        };
-      }>('/public/subscriptions', { id: sub.id });
-
-      if (response.data.success && response.data.data.nodeCount > 0) {
-        get().updateSubscription(sub.id, {
-          ...sub,
-          info: response.data.data.info,
-          nodeCount: response.data.data.nodeCount,
-          status: 'show'
-        });
-      } else {
-        get().updateSubscription(sub.id, {
-          ...sub,
-          status: 'hide'
-        });
-      }
-    } catch (error) {
-      get().updateSubscription(sub.id, {
-        ...sub,
-        status: 'hide'
-      });
-    }
-  },
-
-  updateSubscription: (id, data) => {
-    set(state => ({
-      subscriptions: state.subscriptions.map(sub =>
-        sub.id === id ? { ...sub, ...data } : sub
-      )
-    }));
-  },
-
-  clearSubscriptions: () => {
-    set({ subscriptions: [], initialized: false });
-  },
 
   checkSubscriptions: async (url: string) => {
     try {
@@ -124,6 +53,58 @@ export const createSubscriptionSlice: StateCreator<
       return response.data;
     } catch (error) {
       throw new Error(error instanceof Error ? error.message : '订阅检查失败');
+    }
+  },
+
+  syncSubscription: async (subscription) => {
+    try {
+      const response = await api.post('/admin/subscriptions/sync', subscription);
+      if (response.data.error) {
+        throw new Error(response.data.error);
+      }
+      return response;
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : '同步订阅失败');
+    }
+  },
+
+  fetchSubscriptions: async () => {
+    try {
+      const response = await api.get('/api/admin/subscriptions/sync');
+      if (response.data.error) {
+        throw new Error(response.data.error);
+      }
+      return response.data.data;
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : '获取订阅失败');
+    }
+  },
+
+  fetchAllSubscriptions: async () => {
+    try {
+      const response = await api.get('/admin/subscriptions/sync');
+      if (response.data.error) {
+        throw new Error(response.data.error);
+      }
+      return response;
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : '获取订阅失败');
+    }
+  },
+
+  decryptSubscriptionUrl: async (encrypted_url: string) => {
+    try {
+      const response = await api.post('/admin/subscriptions/decrypt', {
+        encrypted_url
+      });
+      
+      if (response.data.error) {
+        throw new Error(response.data.error);
+      }
+      
+      return response.data;
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : '解密订阅失败');
     }
   }
 }); 

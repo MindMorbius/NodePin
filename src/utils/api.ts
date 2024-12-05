@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import { getSession } from 'next-auth/react';
 
 // 统一响应格式
 interface ApiResponse<T = any> {
@@ -22,8 +23,12 @@ class ApiClient {
 
     // 请求拦截器
     this.client.interceptors.request.use(
-      (config) => {
-        // 可以在这里添加通用的请求处理逻辑
+      async (config) => {
+        // 获取 session 并添加 token 到请求头
+        const session = await getSession();
+        if (session?.accessToken) {
+          config.headers.Authorization = `Bearer ${session.accessToken}`;
+        }
         return config;
       },
       (error) => Promise.reject(error)
