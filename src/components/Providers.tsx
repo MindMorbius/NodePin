@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { PropsWithChildren } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { SessionProvider } from 'next-auth/react';
@@ -7,8 +8,14 @@ import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Toaster } from 'sonner';
 import i18n from '@/i18n';
-import NotificationListener from './common/NotificationListener';
-import GlobalLoading from './common/GlobalLoading';
+
+const NotificationListener = dynamic(() => import('./common/NotificationListener'), {
+  ssr: false
+});
+
+const GlobalLoading = dynamic(() => import('./common/GlobalLoading'), {
+  ssr: false
+});
 
 export default function Providers({ children }: PropsWithChildren) {
   return (
@@ -17,9 +24,9 @@ export default function Providers({ children }: PropsWithChildren) {
       refetchWhenOffline={false}
     >
       <I18nextProvider i18n={i18n}>
-      <NotificationListener />
-        {children}
+        <NotificationListener />
         <GlobalLoading />
+        {children}
         <Analytics />
         <SpeedInsights />
         <Toaster 

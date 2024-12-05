@@ -6,8 +6,17 @@ import { Node } from '@/types/clash';
 export async function GET() {
   try {
     const results = await fetchSubscriptionNodes();
+    
+    // 优雅处理无订阅情况
     if (!results?.length) {
-      throw new Error('No valid subscriptions found');
+      return new NextResponse('No active subscriptions', {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/plain',
+          'Profile-Title': 'NodePin',
+          'Support-URL': 'https://node.rkpin.site'
+        }
+      });
     }
     
     const allNodes: any[] = [];
@@ -129,10 +138,14 @@ export async function GET() {
     });
   } catch (error) {
     console.error('Failed to generate clash config:', error);
-    return new NextResponse(
-      'Error: ' + (error instanceof Error ? error.message : 'Unknown error'), 
-      { status: 500 }
-    );
+    return new NextResponse('Configuration generation failed', { 
+      status: 200,  // 改为200避免客户端报错
+      headers: {
+        'Content-Type': 'text/plain',
+        'Profile-Title': 'NodePin',
+        'Support-URL': 'https://node.rkpin.site'
+      }
+    });
   }
 }
 
