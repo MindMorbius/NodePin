@@ -41,7 +41,11 @@ class ApiClient {
         if (axios.isAxiosError(error)) {
           // 处理 401 未授权
           if (error.response?.status === 401) {
-            window.location.href = '/';
+            const errorMessage = error.response?.data?.error || 'notification.pleaseLogin';
+            const url = new URL('/', window.location.href);
+            url.searchParams.set('auth_error', errorMessage);
+            window.location.href = url.toString();
+            return;
           }
           
           // 统一错误消息格式

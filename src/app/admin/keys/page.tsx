@@ -16,7 +16,7 @@ interface Key {
 
 export default function KeysManagement() {
   const router = useRouter();
-  const { checkAuth } = useStore();
+  const {  } = useStore();
   const [keys, setKeys] = useState<Key[]>([]);
   const [newKey, setNewKey] = useState({ name: '', value: '' });
   const [loading, setLoading] = useState(false);

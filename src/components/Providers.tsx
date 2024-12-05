@@ -8,6 +8,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Toaster } from 'sonner';
 import i18n from '@/i18n';
 import NotificationListener from './common/NotificationListener';
+import GlobalLoading from './common/GlobalLoading';
 
 export default function Providers({ children }: PropsWithChildren) {
   return (
@@ -18,6 +19,7 @@ export default function Providers({ children }: PropsWithChildren) {
       <I18nextProvider i18n={i18n}>
       <NotificationListener />
         {children}
+        <GlobalLoading />
         <Analytics />
         <SpeedInsights />
         <Toaster 

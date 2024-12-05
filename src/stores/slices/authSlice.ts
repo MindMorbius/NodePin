@@ -1,7 +1,7 @@
 import { StateCreator } from 'zustand';
 import { api } from '@/utils/api';
 import { StoreState } from '../types';
-import { getSession, signIn, signOut } from 'next-auth/react';
+import { signIn, signOut } from 'next-auth/react';
 import { toast } from 'sonner';
 
 export interface AuthSlice {
@@ -18,6 +18,8 @@ export interface AuthSlice {
   setLoginDialogOpen: (open: boolean) => void;
   checkSession: () => Promise<SessionInfo>;
   handleAuthFailure: (message: string) => Promise<void>;
+  isSyncing: boolean;
+  setSyncing: (status: boolean) => void;
 }
 
 interface TokenInfo {
@@ -43,9 +45,11 @@ export const createAuthSlice: StateCreator<
   syncStatus: 'idle',
   syncError: null,
   isLoginDialogOpen: false,
+  isSyncing: false,
 
   syncUserData: async () => {
     try {
+      set({ isSyncing: true });
       set({ syncStatus: 'syncing', syncError: null });
       await api.post('/auth/sync');
       set({ syncStatus: 'success' });
@@ -59,6 +63,8 @@ export const createAuthSlice: StateCreator<
         syncError: error instanceof Error ? error.message : 'Unknown error'
       });
       toast.error('同步失败: ' + (error instanceof Error ? error.message : '未知错误'));
+    } finally {
+      set({ isSyncing: false });
     }
   },
 
@@ -87,26 +93,9 @@ export const createAuthSlice: StateCreator<
 
   checkAuth: async () => {
     try {
-      const session = await getSession();
-      if (!session?.user) {
-        set({ isAuthenticated: false, isLoginDialogOpen: true });
-        await signOut({ redirect: false });
-        toast.error('登录已过期，请重新登录');
-        return false;
-      }
-
-      const response = await fetch('/api/auth/check', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          accessToken: session.accessToken
-        })
-      });
-      const data = await response.json();
+      const { data } = await api.post('/auth/check');
       
-      const isAuth = response.ok && data.valid;
+      const isAuth = data.valid;
       set({ isAuthenticated: isAuth });
       
       if (!isAuth) {
@@ -198,4 +187,6 @@ export const createAuthSlice: StateCreator<
     set({ isAuthenticated: false, isLoginDialogOpen: true });
     toast.error(message);
   },
+
+  setSyncing: (status) => set({ isSyncing: status }),
 }); 

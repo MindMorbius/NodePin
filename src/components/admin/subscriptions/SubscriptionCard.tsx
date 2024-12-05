@@ -206,7 +206,8 @@ export default function SubscriptionCard({ subscription, onUpdate }: Subscriptio
       const result = await decryptSubscriptionUrl(subscription.encrypted_url);
 
       await db.updateSubscription(subscription.id, {
-        url: result.url
+        url: result.url,
+        sync_status: 'synced'
       });
 
       toast.success('解密成功');
