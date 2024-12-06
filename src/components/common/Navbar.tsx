@@ -8,6 +8,7 @@ import { Cog6ToothIcon } from '@heroicons/react/24/solid';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useStore } from '@/stores';
 import SessionTimer from './SessionTimer';
+import StatusDisplay from './StatusDisplay';
 
 export default function Navbar() {
   const { t } = useTranslation();
@@ -21,18 +22,18 @@ export default function Navbar() {
     <nav className="sticky top-0 z-50 bg-[var(--card)] backdrop-blur-xl bg-opacity-80 border-b border-black/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* 左侧区域: Logo */}
-          <div className="flex-shrink-0">
-            <Link 
-              href="/" 
-              className="text-xl font-bold bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent"
-            >
-              NodePin
-            </Link>
+          {/* 左侧区域: Logo + 状态显示 */}
+          <div className="flex flex-col items-start">
+            <div className="ml-3">
+              <Link 
+                href="/" 
+                className="text-xl font-bold bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent"
+              >
+                NodePin
+              </Link>
           </div>
-
-          {/* 中间区域: 会话计时器 */}
-          <SessionTimer />
+            <StatusDisplay />
+          </div>
 
           {/* 右侧区域: 管理面板按钮和头像 */}
           <div className="flex-shrink-0 flex items-center gap-4">
