@@ -43,6 +43,7 @@ export default function SubscriptionManagement() {
   const [loading, setLoading] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [showDeleted, setShowDeleted] = useState(false);
 
   const fetchSubscriptions = async () => {
     try {
@@ -196,6 +197,11 @@ export default function SubscriptionManagement() {
     }
   };
 
+  // 在渲染列表时过滤数据
+  const filteredSubs = subs.filter(sub => 
+    showDeleted ? true : sub.status !== 'delete'
+  );
+
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
@@ -221,7 +227,18 @@ export default function SubscriptionManagement() {
 
       {/* 订阅列表 */}
       <div className="space-y-4">
-        {subs.map((sub) => (
+        <div className="flex gap-4 items-center">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={showDeleted}
+              onChange={(e) => setShowDeleted(e.target.checked)}
+              className="rounded text-[var(--primary)]"
+            />
+            显示已删除数据
+          </label>
+        </div>
+        {filteredSubs.map((sub) => (
           <SubscriptionCard 
             key={sub.id}
             subscription={sub}
@@ -229,7 +246,7 @@ export default function SubscriptionManagement() {
           />
         ))}
 
-        {subs.length === 0 && !loading && (
+        {filteredSubs.length === 0 && !loading && (
           <div className="text-center py-12 text-gray-500">
             暂无订阅数据
           </div>

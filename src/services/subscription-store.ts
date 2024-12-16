@@ -40,6 +40,8 @@ export async function fetchSubscriptionNodes(specificUrls?: string[]) {
       
       try {
         const data = await parseSubscription(sub.url);
+
+        // console.log('Data:', data);
         const maxReasonableValue = 1125899906842624 * 100;
         
         const validateNumber = (num: any) => {
@@ -54,9 +56,9 @@ export async function fetchSubscriptionNodes(specificUrls?: string[]) {
           expire: validateNumber(data.info.expire)
         };
 
-        if (info.total < (info.upload + info.download)) {
-          info.total = Math.ceil((info.upload + info.download) * 1.2);
-        }
+        // if (info.total < (info.upload + info.download)) {
+        //   info.total = Math.ceil((info.upload + info.download) * 1.2);
+        // }
 
         const filteredNodes = data.nodes.filter(node => {
           // const invalidKeywords = ['剩余', '过期', '到期', '流量', 'expire', 'traffic', '官网', '（看这里）', '.ink', '套餐', '网址', '链接', '订阅', '更新', 't.me', '.com', '邀请', '返利', '新用户'];

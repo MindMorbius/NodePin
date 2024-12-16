@@ -11,6 +11,10 @@ export async function POST(req: Request) {
 
     const decryptedUrl = await decrypt(encrypted_url);
 
+    if (!decryptedUrl) {
+      return NextResponse.json({ error: 'Failed to decrypt URL' }, { status: 400 });
+    }
+
     return NextResponse.json({
       success: true,
       url: decryptedUrl

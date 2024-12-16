@@ -98,7 +98,7 @@ export const createSubscriptionSlice: StateCreator<
         encrypted_url
       });
       
-      if (response.data.error) {
+      if (response.data.error || !response.data.url) {
         throw new Error(response.data.error);
       }
       

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDownIcon, ChevronUpIcon, ArrowPathIcon, PencilIcon, XMarkIcon, CheckIcon, ListBulletIcon, CloudArrowUpIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import { ChevronDownIcon, ChevronUpIcon, ArrowPathIcon, PencilIcon, XMarkIcon, CheckIcon, ListBulletIcon, CloudArrowUpIcon, EyeIcon, EyeSlashIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { api } from '@/utils/api';
 import { toast } from 'sonner';
 import { db } from '@/utils/db';
@@ -11,6 +11,7 @@ import { SubscriptionInfo } from '@/types/clash';
 import { format, formatDistanceToNow } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { decrypt } from '@/utils/crypto';
+import TokenGenerator from './TokenGenerator';
 
 interface SubscriptionCardProps {
   subscription: {
@@ -29,6 +30,7 @@ interface SubscriptionCardProps {
     updated_at: string;
     user_subscriptions_id?: string;
     encrypted_url?: string;
+    status?: 'delete';
   };
   onUpdate: () => void;
 }
@@ -67,6 +69,8 @@ export default function SubscriptionCard({ subscription, onUpdate }: Subscriptio
       setChecking(true);
       const response = await checkSubscriptions(subscription.url);
 
+      // console.log('Response:', response);
+
       await db.updateSubscription(subscription.id, {
         upload_traffic: response.info.upload,
         download_traffic: response.info.download,
@@ -85,6 +89,7 @@ export default function SubscriptionCard({ subscription, onUpdate }: Subscriptio
       toast.success('订阅信息更新成功');
     } catch (error) {
       toast.error(error.message);
+      toast.info("请检查订阅地址是否已正确解密，如果未解密，请先点击加密地址来获取订阅地址");
       await db.updateSubscription(subscription.id, {
         fetch_status: 'failed',
         data_update_time: new Date().toISOString()
@@ -220,6 +225,37 @@ export default function SubscriptionCard({ subscription, onUpdate }: Subscriptio
     }
   };
 
+  const handleDelete = async () => {
+    try {
+      if (subscription.type === 'local') {
+        await db.deleteSubscription(subscription.id);
+        toast.success('订阅已删除');
+      } else {
+        await db.updateSubscription(subscription.id, {
+          status: 'delete',
+          sync_status: 'pending'
+        });
+        toast.success('订阅已标记为删除');
+      }
+      onUpdate();
+    } catch (error) {
+      toast.error('删除失败');
+    }
+  };
+
+  const handleRestore = async () => {
+    try {
+      await db.updateSubscription(subscription.id, {
+        status: 'active',
+        sync_status: 'pending'
+      });
+      toast.success('订阅已恢复');
+      onUpdate();
+    } catch (error) {
+      toast.error('恢复失败');
+    }
+  };
+
   return (
     <>
       <div className="bg-[var(--card)] rounded-lg shadow-sm overflow-hidden">
@@ -229,6 +265,11 @@ export default function SubscriptionCard({ subscription, onUpdate }: Subscriptio
             <div className="space-y-1 flex-1">
               <div className="flex items-center gap-2 max-w-[1000px]">
                 <h3 className="font-medium truncate">{subscription.name}</h3>
+                {subscription.status === 'delete' && (
+                  <span className="px-2 py-0.5 bg-red-50 text-red-600 text-xs rounded-full">
+                    已删除
+                  </span>
+                )}
               </div>
               <div className="text-sm text-gray-500 flex items-center gap-2">
                 <span>创建于: {formatDistanceToNow(new Date(subscription.created_at), {locale: zhCN, addSuffix: true})}</span>
@@ -294,6 +335,23 @@ export default function SubscriptionCard({ subscription, onUpdate }: Subscriptio
                   </span>
                 )}
               </button>
+              {subscription.status === 'delete' ? (
+                <button
+                  onClick={handleRestore}
+                  className="px-3 py-1.5 bg-[var(--card)] hover:bg-[var(--card-hover)] rounded-lg transition-colors flex items-center gap-1.5 text-green-500 hover:text-green-600"
+                >
+                  <ArrowPathIcon className="w-4 h-4" />
+                  恢复
+                </button>
+              ) : (
+                <button
+                  onClick={handleDelete}
+                  className="px-3 py-1.5 bg-[var(--card)] hover:bg-[var(--card-hover)] rounded-lg transition-colors flex items-center gap-1.5 text-red-500 hover:text-red-600"
+                >
+                  <TrashIcon className="w-4 h-4" />
+                  删除
+                </button>
+              )}
             </div>
           </div>
 
@@ -306,7 +364,7 @@ export default function SubscriptionCard({ subscription, onUpdate }: Subscriptio
             <div>
               <div className="text-sm text-gray-500">已用流量</div>
               <div className="font-medium">
-                {formatBytes(subscription.upload_traffic + (subscription.download_traffic || 0))}
+                {formatBytes((subscription.upload_traffic || 0) + (subscription.download_traffic || 0))}
               </div>
             </div>
             <div>
@@ -351,19 +409,19 @@ export default function SubscriptionCard({ subscription, onUpdate }: Subscriptio
             {expanded ? (
               <>
                 <ChevronUpIcon className="w-4 h-4" />
-                收起详情
+                收起界面
               </>
             ) : (
               <>
                 <ChevronDownIcon className="w-4 h-4" />
-                查看详情
+                令牌管理
               </>
             )}
           </button>
 
           {expanded && (
-            <div className="space-y-2 pt-2 border-t border-gray-100">
-              待实现
+            <div className="space-y-4 pt-2 border-t border-gray-100">
+              <TokenGenerator subscriptionId={subscription.id} />
             </div>
           )}
         </div>

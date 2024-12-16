@@ -1,4 +1,5 @@
 import { openDB, IDBPDatabase } from 'idb';
+import { generateShortToken } from './crypto';
 
 export interface Subscription {
   id: string;
@@ -14,12 +15,26 @@ export interface Subscription {
   node_count?: number;
   expire_time?: number;
   status: 'active' | 'hide' | 'delete' | 'expired';
+  type?: 'local' | 'cloud';
   updated_at: string;
   created_at: string;
   sync_status?: 'pending' | 'synced' | 'failed';
   nodes: Array<{
     name: string;
     type: string;
+  }>;
+  tokens: Array<{
+    token: string;
+    expire_time: number;
+    user_limit: number;
+    duration_limit: number;
+    trust_level_limit: number;
+    created_at: string;
+    updated_at: string;
+    status: 'active' | 'hide' | 'delete' | 'expired';
+    type?: 'local' | 'cloud';
+    user_count: number;
+    last_used_at: string | null;
   }>;
 }
 
@@ -92,7 +107,17 @@ class DBManager {
 
   async deleteSubscription(id: string): Promise<void> {
     const db = await this.init();
-    await db.delete('subscriptions', id);
+    const subscription = await this.getSubscription(id);
+    
+    if (!subscription) {
+      throw new Error('Subscription not found');
+    }
+
+    if (subscription.type === 'local') {
+      await db.delete('subscriptions', id);
+    } else {
+      throw new Error('Cloud subscriptions cannot be deleted directly');
+    }
   }
 
   async getPendingSyncs(): Promise<Subscription[]> {
@@ -106,6 +131,94 @@ class DBManager {
     return localSubs.filter(localSub => {
       const remoteSub = remoteSubs.find(remote => remote.user_subscriptions_id === localSub.user_subscriptions_id);
       return !remoteSub || localSub.updated_at !== remoteSub.updated_at;
+    });
+  }
+
+  async createSubscriptionToken(subscriptionId: string, data: {
+    expire_time?: number;
+    user_limit?: number;
+    trust_level_limit: number;
+    duration_limit?: number;
+  }): Promise<string> {
+    const db = await this.init();
+    const subscription = await this.getSubscription(subscriptionId);
+    
+    if (!subscription) {
+      throw new Error('Subscription not found');
+    }
+
+    const now = new Date().toISOString();
+    const token = {
+      token: `np-${generateShortToken()}`, // 生成唯一token
+      expire_time: data.expire_time || 0,
+      user_limit: data.user_limit || 0,
+      duration_limit: data.duration_limit || 0,
+      trust_level_limit: data.trust_level_limit,
+      created_at: now,
+      updated_at: now,
+      status: 'active' as const,
+      type: 'local' as const,
+      user_count: 0,
+      last_used_at: null
+    };
+
+    const tokens = subscription.tokens || [];
+    tokens.push(token);
+
+    await this.updateSubscription(subscriptionId, {
+      tokens,
+      sync_status: 'pending'
+    });
+
+    return token.token;
+  }
+
+  async getSubscriptionTokens(subscriptionId: string) {
+    const db = await this.init();
+    const subscription = await this.getSubscription(subscriptionId);
+    
+    if (!subscription) {
+      throw new Error('Subscription not found');
+    }
+
+    return subscription.tokens || [];
+  }
+
+  async updateSubscriptionToken(subscriptionId: string, tokenId: string, data: {
+    status?: 'active' | 'hide' | 'delete' | 'expired';
+    type?: 'local' | 'cloud';
+    user_count?: number;
+    last_used_at?: string;
+  }) {
+    const db = await this.init();
+    const subscription = await this.getSubscription(subscriptionId);
+    
+    if (!subscription) {
+      throw new Error('Subscription not found');
+    }
+
+    const tokens = subscription.tokens || [];
+    const tokenIndex = tokens.findIndex(t => t.token === tokenId);
+    
+    if (tokenIndex === -1) {
+      throw new Error('Token not found');
+    }
+
+    tokens[tokenIndex] = {
+      ...tokens[tokenIndex],
+      ...data,
+      updated_at: new Date().toISOString()
+    };
+
+    await this.updateSubscription(subscriptionId, {
+      tokens,
+      sync_status: 'pending'
+    });
+  }
+
+  async deleteSubscriptionToken(subscriptionId: string, tokenId: string) {
+    return this.updateSubscriptionToken(subscriptionId, tokenId, {
+      status: 'delete'
     });
   }
 }
