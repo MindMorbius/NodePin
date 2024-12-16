@@ -1,11 +1,12 @@
 'use client';
 
-import Link from 'next/link';
+import { useRouter } from '@/hooks/useRouter';
 import { useTranslation } from 'react-i18next';
 import { HomeIcon } from '@heroicons/react/24/outline';
 
 export default function NotFound() {
   const { t } = useTranslation();
+  const router = useRouter();
   
   return (
     <div className="min-h-[80vh] flex flex-col items-center justify-center p-6 text-center">
@@ -17,14 +18,14 @@ export default function NotFound() {
         {t('error.pageNotFound')}
       </p>
       
-      <Link 
-        href="/"
+      <button 
+        onClick={() => router.push('/')}
         className="mt-8 px-6 py-3 bg-[var(--primary)] hover:bg-[var(--primary-hover)] 
           text-white rounded-xl transition-colors flex items-center gap-2 group"
       >
         <HomeIcon className="w-5 h-5 group-hover:-translate-y-0.5 transition-transform" />
         {t('common.backToHome')}
-      </Link>
+      </button>
     </div>
   );
 }

@@ -1,13 +1,12 @@
 'use client';
 
 import { useTranslation } from 'react-i18next';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
+import { useRouter } from '@/hooks/useRouter';
 import UserAvatar from './UserAvatar';
 import { Cog6ToothIcon } from '@heroicons/react/24/solid';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useStore } from '@/stores';
-import SessionTimer from './SessionTimer';
 import StatusDisplay from './StatusDisplay';
 
 export default function Navbar() {
@@ -25,25 +24,25 @@ export default function Navbar() {
           {/* 左侧区域: Logo + 状态显示 */}
           <div className="flex flex-col items-start">
             <div className="ml-3">
-              <Link 
-                href="/" 
+              <button 
+                onClick={() => router.push('/')} 
                 className="text-xl font-bold bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent"
               >
                 NodePin
-              </Link>
-          </div>
+              </button>
+            </div>
             <StatusDisplay />
           </div>
 
           {/* 右侧区域: 管理面板按钮和头像 */}
           <div className="flex-shrink-0 flex items-center gap-4">
             {!isAdmin && (
-              <Link
-                href="/admin"
+              <button
+                onClick={() => router.push('/admin')}
                 className="px-4 py-2 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white rounded-lg transition-colors flex items-center gap-2">
                 <Cog6ToothIcon className="w-5 h-5" />
                 {t('common.adminPanel')}
-              </Link>
+              </button>
             )}
             {isAdmin && (
               <button

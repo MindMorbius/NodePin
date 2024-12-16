@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/hooks/useRouter';
 import { useStore } from '@/stores';
 import { useEffect } from 'react';
 import {
@@ -10,7 +10,6 @@ import {
   QueueListIcon,
   ArrowLeftIcon
 } from '@heroicons/react/24/outline';
-import UserAvatar from '@/components/common/UserAvatar';
 
 const adminMenus = [
   {

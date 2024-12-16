@@ -1,15 +1,16 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useRouter } from '@/hooks/useRouter';
 import { useStore } from '@/stores';
 import { useTranslation } from 'react-i18next';
 import StatusBar from '@/components/page/StatusBar';
-import Link from 'next/link';
 import UserCard from '@/components/page/UserCard';
 import SubscriptionPublicCard from '@/components/page/SubscriptionPublicCard';
 
 export default function Home() {
   const { t } = useTranslation();
+  const router = useRouter();
   const { 
     subscriptionsPublic,
     subscriptionsPublicLoading,
@@ -70,9 +71,9 @@ export default function Home() {
             .filter(sub => sub.fetch_status !== 'failed')
             .map((sub) => (
               <SubscriptionPublicCard 
-                key={sub.id}
+                key={`subscription-${sub.id || Math.random()}`}
                 sub={{
-                  id: sub.id,
+                  id: sub.id || '',
                   name: sub.name || '',
                   info: {
                     total: sub.total_traffic || 0,
@@ -124,9 +125,12 @@ export default function Home() {
       )}
 
       <footer className="mt-8 text-center text-sm opacity-60">
-        <Link href="/disclaimer" className="hover:underline">
+        <button 
+          onClick={() => router.push('/disclaimer')} 
+          className="hover:underline"
+        >
           @ {t('common.disclaimer')}
-        </Link>
+        </button>
       </footer>
     </main>
   );

@@ -1,10 +1,11 @@
 'use client';
 
 import { useTranslation } from 'react-i18next';
-import Link from 'next/link';
+import { useRouter } from '@/hooks/useRouter';
 
 export default function Disclaimer() {
   const { t } = useTranslation();
+  const router = useRouter();
   
   return (
     <main className="max-w-3xl mx-auto p-6">
@@ -29,12 +30,12 @@ export default function Disclaimer() {
         </section>
 
         <div className="text-center mt-8">
-          <Link 
-            href="/"
+          <button 
+            onClick={() => router.push('/')}
             className="inline-flex px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
           >
             {t('common.backToHome')}
-          </Link>
+          </button>
         </div>
       </div>
     </main>

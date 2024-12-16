@@ -41,9 +41,15 @@
 - [x] 调用API检查会话过期并清除登录状态
 - [x] 等待登录同步loading
 - [x] navbar 中间部分内容调整
-### 进行中
-- [ ] 界面加载loading
+
+### preview分支
+- [x] 跳转页面显示loading
 - [ ] 订阅令牌生成组件
+- [ ] 订阅链接显示
+
+- [ ] loading显示详细状态
+
+### 正式分支
 - [ ] 订阅管理面板完善
 - [ ] zustand 状态管理
 - [ ] 上传订阅时获取订阅信息，自动设置过期时间
@@ -53,3 +59,7 @@
 - [ ] 节点获取、过滤、规则、导出
 - [ ] 管理面板：用户管理、令牌管理、订阅管理、节点管理
 
+### 后续计划
+- [ ] 集成Sub-Store
+> https://github.com/sub-store-org/Sub-Store
+> https://github.com/sub-store-org/Sub-Store-Front-End
